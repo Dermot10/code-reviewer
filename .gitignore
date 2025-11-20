@@ -1,28 +1,62 @@
+# =========================
 # Python
+# =========================
 __pycache__/
 *.py[cod]
 *.env
 backend-python/venv/
 
+
+# =========================
 # Go
+# =========================
 bin/
 *.exe
 *.test
 *.out
 
-# React / Node
+
+# =========================
+# React / TypeScript / Node
+# =========================
 frontend-react/node_modules/
 frontend-react/build/
+frontend-react/dist/
+frontend-react/dist-ssr/
 frontend-react/.cache/
+frontend-react/.local/
+frontend-react/coverage/
+
+# Environment files
 frontend-react/.env.local
 frontend-react/.env.development.local
 frontend-react/.env.test.local
 frontend-react/.env.production.local
-frontend-react/coverage/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# General
+# Logs
+frontend-react/*.log
+frontend-react/npm-debug.log*
+frontend-react/yarn-debug.log*
+frontend-react/yarn-error.log*
+frontend-react/pnpm-debug.log*
+frontend-react/lerna-debug.log*
+
+
+# =========================
+# General OS / Tools
+# =========================
 .DS_Store
 .vscode/
+.idea/
+
+
+# =========================
+# Editor & IDE files
+# =========================
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
