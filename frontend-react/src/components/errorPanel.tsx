@@ -1,5 +1,3 @@
-
-
 interface ErrorPanelProps {
     onRetry:(e: React.MouseEvent<HTMLButtonElement>) => void;
 }

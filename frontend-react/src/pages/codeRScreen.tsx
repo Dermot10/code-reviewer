@@ -16,7 +16,6 @@ export default function MainScreen() {
   const [currentState, setCurrentState] = useState<AppState>("idle");
   const [code, setCode] = useState("");
   const [result, setResult] = useState("");
-  // const [isLoading, setIsLoading] = useState("")
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState("light");
 
@@ -108,7 +107,6 @@ export default function MainScreen() {
 
 
 async function submitCode(code: string): Promise<MockResponse>{
-  // mock api call with the input code
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ 

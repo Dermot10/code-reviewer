@@ -1,6 +1,3 @@
-// will have the txt panel which returns output
-
-
 interface ResultsPanelProps {
     result: string;
     onCopy:(e: React.MouseEvent<HTMLButtonElement>) => void;
