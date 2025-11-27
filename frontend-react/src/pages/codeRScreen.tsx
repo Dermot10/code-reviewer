@@ -1,7 +1,7 @@
 import CodeEditor from "../components/codeEditor";
 import ResultsPanel from "../components/resultsPanel";
 import ErrorPanel from "../components/errorPanel";
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { useEffect } from "react";
 import "../index.css";
 
