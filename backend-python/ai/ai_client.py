@@ -13,10 +13,6 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
 
-async def openai_call_async(input_prompt: str):
-    return await anyio.to_thread.run_sync(openai_call, input_prompt)
-
-
 def openai_call(input_prompt: str):
     """
     OpenAI API call

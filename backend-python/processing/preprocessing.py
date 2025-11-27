@@ -37,13 +37,13 @@ def process_uploaded_file(file_path: str) -> List[CodeContext]:
         raise ValueError(f"Failed to read file {file_path}: {str(e)}")
 
     # Use your existing chunking function
-    chunks = chunk_code_file(code_body, file_path=file_path)
+    chunks = chunk_code(code_body, file_path=file_path)
     return chunks
 
 
-def chunk_code_file(
+def chunk_code(
     code: str,
-    file_path: str
+    file_path: str = "editor_input"
 ) -> List[CodeContext]:
     """
     Splits code into chunks by function or class.
