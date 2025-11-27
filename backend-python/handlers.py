@@ -13,7 +13,9 @@ async def analyse(submitted_code: str):
     Accepts a file, processes the contents, and returns an analysis/summary.
 
     """
-    # response = await Execute(file)
+
+    download_flag = False
+    # response = await Execute(submitted_code, download_flag)
     # returns analysis from openai
     # return response
 
@@ -26,7 +28,8 @@ async def analyse(submitted_code: str) -> File:
     Accepts a file, processes the contents, and return a download file.
 
     """
-    # response = await Execute(file)
+    download_flag = True
+    # response = await Execute(submitted_code, download_flag)
     # returns analysis from openai
     # return response
 
@@ -39,7 +42,8 @@ async def analyse(file: UploadFile):
     Accepts a file, processes the contents, and returns an analysis/summary.
 
     """
-    # response = await Execute(file)
+    download_flag = False
+    # response = await Execute(file, download_flag)
     # returns analysis from openai
     # return response
 
@@ -52,7 +56,8 @@ async def analyse(file: UploadFile) -> File:
     Accepts a file, processes the contents, and return a download file.
 
     """
-    # response = await Execute(file)
+    download_flag = True
+    # response = await Execute(file, download_flag)
     # returns analysis from openai
     # return response
 
