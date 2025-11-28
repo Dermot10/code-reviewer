@@ -1,39 +1,42 @@
 from typing import List
+
 from .ai_client import openai_call
 from .prompts import SYNTAX_PROMPT, BEST_PRACTICES_PROMPT, SEMANTIC_PROMPT, SECURITY_PROMPT
-from ..processing.preprocessing import CodeContext
+from ..processing.preprocessing import CodeContext, ReviewContext
 
+
+async def handle_agent(
+    codeContexts: List[CodeContext], 
+    prompt: str, 
+    strategy: str
+) -> List[ReviewContext]:
+    results = []
+    for context in codeContexts:
+        ai_prompt = f"{prompt}\n\n{context.code}"
+        review = ReviewContext(chunk_id = context.chunk_id)
+        setattr(review, strategy,await openai_call(ai_prompt)),
+        results.append(review)
+    return results
 
 async def handle_syntax(
-    ctx: CodeContext
-) -> None:
-    prompt = f"{SYNTAX_PROMPT}\n\n{ctx.code}"
-    response = await openai_call(prompt)
-    return response
-
+    codeContexts: List[CodeContext]
+) -> List[ReviewContext]:
+   return await handle_agent(codeContexts, SYNTAX_PROMPT, "syntax")
 
 async def handle_best_practice(
-    ctx: CodeContext
-) -> None:
-    prompt = f"{BEST_PRACTICES_PROMPT}\n\n{ctx.code}"
-    response = await openai_call(prompt)
-    return response
-
+    codeContexts: List[CodeContext]
+) -> List[ReviewContext]:
+   return await handle_agent(codeContexts, BEST_PRACTICES_PROMPT, "best_practices")
 
 async def handle_sematics(
-    ctx: CodeContext
-) -> None:
-    prompt = f"{SEMANTIC_PROMPT}\n\n{ctx.code}"
-    response = await openai_call(prompt)
-    return response
-
+    codeContexts: List[CodeContext]
+) -> List[ReviewContext]:
+   return await handle_agent(codeContexts, SEMANTIC_PROMPT, "semantics")
 
 async def handle_security(
-    ctx: CodeContext
-) -> None:
-    prompt = f"{SECURITY_PROMPT}\n\n{ctx.code}"
-    response = await openai_call(prompt)
-    return response
+    codeContexts: List[CodeContext]
+) -> List[ReviewContext]:
+   return await handle_agent(codeContexts, SECURITY_PROMPT, "syntax")
 
 
 # aggregator function for the final code review

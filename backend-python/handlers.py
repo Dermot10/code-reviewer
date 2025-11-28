@@ -1,5 +1,6 @@
-from typing import Annotated, List
+from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
+from fastapi.responses import FileResponse
 from processing.preprocessing import chunk_code, process_uploaded_file
 from service.service import Execute
 
@@ -7,13 +8,12 @@ review_router = APIRouter(prefix="/review", tags=["review"])
 
 
 @review_router.post("/code")
-async def analyse(submitted_code: str):
+async def analyse(submitted_code: str) -> Dict[str, Any]:
     """
-    Primary API endpoint for file analysis.
+        Primary API endpoint for file analysis.
 
-    Accepts a file, processes the contents, and returns an analysis/summary.
-
-    """
+        Accepts editor code submit, processes the contents, and returns an analysis/summary
+        """
 
     download_flag = False
     chunked_code = chunk_code(submitted_code)
@@ -23,11 +23,11 @@ async def analyse(submitted_code: str):
 
 
 @review_router.post("/code/download")
-async def analyse(submitted_code: str) -> File:
+async def analyse(submitted_code: str) -> FileResponse:
     """
     Primary API endpoint for file analysis.
 
-    Accepts a file, processes the contents, and return a download file.
+    Accepts editor code submit, processes the contents, and returns an analysis/summary as a downloadable file.
 
     """
     download_flag = True
@@ -40,7 +40,7 @@ async def analyse(submitted_code: str) -> File:
 
 
 @review_router.post("/file")
-async def analyse(file: UploadFile):
+async def analyse(file: UploadFile) -> Dict[str, Any]:
     """
     Primary API endpoint for file analysis.
 
@@ -56,11 +56,11 @@ async def analyse(file: UploadFile):
 
 
 @review_router.post("/file/download")
-async def analyse(file: UploadFile) -> File:
+async def analyse(file: UploadFile) -> FileResponse:
     """
     Primary API endpoint for file analysis.
 
-    Accepts a file, processes the contents, and return a download file.
+    Accepts a file, processes the contents, and returns an analysis/summary as a downloadable file.
 
     """
     download_flag = True
