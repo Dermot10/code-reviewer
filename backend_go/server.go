@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/dermot10/code-reviewer/backend-go/handlers"
+	"github.com/dermot10/code-reviewer/backend_go/handlers"
 
 	"context"
 	"fmt"

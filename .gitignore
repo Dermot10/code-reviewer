@@ -19,27 +19,27 @@ bin/
 # =========================
 # React / TypeScript / Node
 # =========================
-frontend-react/node_modules/
-frontend-react/build/
-frontend-react/dist/
-frontend-react/dist-ssr/
-frontend-react/.cache/
-frontend-react/.local/
-frontend-react/coverage/
+frontend_react/node_modules/
+frontend_react/build/
+frontend_react/dist/
+frontend_react/dist-ssr/
+frontend_react/.cache/
+frontend_react/.local/
+frontend_react/coverage/
 
 # Environment files
-frontend-react/.env.local
-frontend-react/.env.development.local
-frontend-react/.env.test.local
-frontend-react/.env.production.local
+frontend_react/.env.local
+frontend_react/.env.development.local
+frontend_react/.env.test.local
+frontend_react/.env.production.local
 
 # Logs
-frontend-react/*.log
-frontend-react/npm-debug.log*
-frontend-react/yarn-debug.log*
-frontend-react/yarn-error.log*
-frontend-react/pnpm-debug.log*
-frontend-react/lerna-debug.log*
+frontend_react/*.log
+frontend_react/npm-debug.log*
+frontend_react/yarn-debug.log*
+frontend_react/yarn-error.log*
+frontend_react/pnpm-debug.log*
+frontend_react/lerna-debug.log*
 
 
 # =========================
