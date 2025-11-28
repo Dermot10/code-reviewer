@@ -4,7 +4,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 from exceptions.exceptions import OpenAiProcessingError
-from .prompts import SYSTEM_PROMPT
+from prompts import SYSTEM_PROMPT
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")

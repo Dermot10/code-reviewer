@@ -1,8 +1,8 @@
 from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse
-from processing.preprocessing import chunk_code, process_uploaded_file
-from service.service import Execute
+from backend_python.processing.preprocessing import chunk_code, process_uploaded_file
+from backend_python.service.service import Execute
 
 review_router = APIRouter(prefix="/review", tags=["review"])
 
@@ -16,8 +16,8 @@ async def analyse(submitted_code: str) -> Dict[str, Any]:
         """
 
     download_flag = False
-    chunked_code = chunk_code(submitted_code)
-    response = await Execute(chunked_code, download_flag)
+    chunkedContext = chunk_code(submitted_code)
+    response = await Execute(chunkedContext, download_flag)
     # returns analysis from openai
     # return response
 
@@ -31,8 +31,8 @@ async def analyse(submitted_code: str) -> FileResponse:
 
     """
     download_flag = True
-    chunked_code = chunk_code(submitted_code)
-    response = await Execute(chunked_code, download_flag)
+    chunkedContext = chunk_code(submitted_code)
+    response = await Execute(chunkedContext, download_flag)
 
     # returns analysis from openai
 
@@ -48,9 +48,9 @@ async def analyse(file: UploadFile) -> Dict[str, Any]:
 
     """
     download_flag = False
-    chunked_code = process_uploaded_file(file)
+    chunkedContext = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunked_code, download_flag)
+    response = await Execute(chunkedContext, download_flag)
 
     # return response
 
@@ -64,9 +64,9 @@ async def analyse(file: UploadFile) -> FileResponse:
 
     """
     download_flag = True
-    chunked_code = process_uploaded_file(file)
+    chunkedContext = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunked_code, download_flag)
+    response = await Execute(chunkedContext, download_flag)
 
     # repackage into a file
 

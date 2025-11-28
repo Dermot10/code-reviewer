@@ -17,7 +17,8 @@
 
 import ast
 from typing import List
-from .context import CodeContext
+from backend_python.processing.context import CodeContext
+from backend_python.metrics import CHUNKING_FAILURES, FILE_EXTRACTION_ERRORS
 
 
 def process_uploaded_file(file_path: str) -> List[CodeContext]:
@@ -34,6 +35,7 @@ def process_uploaded_file(file_path: str) -> List[CodeContext]:
         with open(file_path, "r", encoding="utf-8") as f:
             code_body = f.read()
     except Exception as e:
+        FILE_EXTRACTION_ERRORS.inc()
         raise ValueError(f"Failed to read file {file_path}: {str(e)}")
 
     # Use your existing chunking function
@@ -60,6 +62,8 @@ def chunk_code(
         tree = ast.parse(code)
     except SyntaxError:
         # fallback: treat entire file as one chunk if parse fails
+        # may include code which doesn't need to be chunked, test 
+        CHUNKING_FAILURES.inc()
         return [CodeContext(file_path=file_path, chunk_id="0", code=code)]
 
     for i, node in enumerate(tree.body):
