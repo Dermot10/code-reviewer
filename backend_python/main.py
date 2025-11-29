@@ -10,3 +10,24 @@ app.mount("/metrics", make_asgi_app())
 if __name__ == "__main__": 
     
     print("Hello World")
+
+
+
+# TODO -
+
+# Done: preprocessing - chunking 
+
+# aggregator
+
+# add aggregator to service code, may require chunking 
+
+# postprocessing
+    # json results
+    # file postprocessing to package as correct code file
+
+# testing 
+    # dummy results
+    # go api
+
+
+

@@ -1,7 +1,8 @@
 from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse
-from backend_python.processing.preprocessing import chunk_code, process_uploaded_file
+from backend_python.processing.postprocessing import postprocess
+from backend_python.processing.preprocessing import extract_chunks, process_uploaded_file
 from backend_python.service.service import Execute
 
 review_router = APIRouter(prefix="/review", tags=["review"])
@@ -15,11 +16,10 @@ async def analyse(submitted_code: str) -> Dict[str, Any]:
         Accepts editor code submit, processes the contents, and returns an analysis/summary
         """
 
-    download_flag = False
-    chunkedContext = chunk_code(submitted_code)
-    response = await Execute(chunkedContext, download_flag)
-    # returns analysis from openai
-    # return response
+    chunkedContext = extract_chunks(submitted_code)
+    response = await Execute(chunkedContext)
+    return postprocess(response)
+   
 
 
 @review_router.post("/code/download")
@@ -30,9 +30,9 @@ async def analyse(submitted_code: str) -> FileResponse:
     Accepts editor code submit, processes the contents, and returns an analysis/summary as a downloadable file.
 
     """
-    download_flag = True
-    chunkedContext = chunk_code(submitted_code)
-    response = await Execute(chunkedContext, download_flag)
+ 
+    chunkedContext = extract_chunks(submitted_code)
+    response = await Execute(chunkedContext)
 
     # returns analysis from openai
 
@@ -47,10 +47,10 @@ async def analyse(file: UploadFile) -> Dict[str, Any]:
     Accepts a file, processes the contents, and returns an analysis/summary.
 
     """
-    download_flag = False
+
     chunkedContext = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunkedContext, download_flag)
+    response = await Execute(chunkedContext)
 
     # return response
 
@@ -63,10 +63,10 @@ async def analyse(file: UploadFile) -> FileResponse:
     Accepts a file, processes the contents, and returns an analysis/summary as a downloadable file.
 
     """
-    download_flag = True
+
     chunkedContext = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunkedContext, download_flag)
+    response = await Execute(chunkedContext)
 
     # repackage into a file
 

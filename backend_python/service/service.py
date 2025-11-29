@@ -9,29 +9,20 @@ from backend_python.ai.ai_agents import handle_syntax, handle_sematics, handle_b
 from metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
 
 
-async def Execute(chunked_code: List[CodeContext], download_flag: bool):
+async def Execute(chunked_code: List[CodeContext]):
     try: 
-        if not download_flag:
-            # replaced by func to wrap regular code review
-            output = await handle_code_review(chunked_code)
-            return output
-        # func to wrap download functionality around code review
+        output = await code_review_service(chunked_code)
+        return output
     except Exception as e: 
         logger.warning(f"failed to execute code review process - {e}")
         raise 
 
-#func for downloadable file 
-
-
-#func for regular 
-
-# aggregator function for the final code review
-async def handle_code_review(chunkedContext: List[CodeContext]):
+async def code_review_service(chunked_context: List[CodeContext]):
     chain = [
         handle_syntax,
         handle_sematics,
-        handle_best_practices,
-        handle_security
+        handle_security,
+        handle_best_practices
     ]
 
     results = []
@@ -40,11 +31,20 @@ async def handle_code_review(chunkedContext: List[CodeContext]):
         with AI_PROCESSING_TIME.time():
             for agent in chain: 
                 try: 
-                    result = await agent(chunkedContext)
-                    results.append(result)
+                    agent_result = await agent(chunked_context)
+                    results.extend(agent_result)
                     logger.info(f"{agent.__name__} - succesfully processed code")
                 except Exception as e: 
                     logger.error(f"{agent.__name__} failed: {e}")
+
+            # TODO 
+            
+            # aggregator function for the final code review
+
+            # May need to chunk in postprocessing before aggregator function
+                # or heirachical priority given to syntax, semantics, security then best practices
+
+        
     
     except Exception as e: 
         logger.warning(f"AI agents failed to process the code - {e}")
