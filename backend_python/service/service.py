@@ -3,6 +3,8 @@
 # metrics 
 from typing import List
 from fastapi import HTTPException
+from backend_python.ai.ai_client import final_ai_call
+from backend_python.processing.aggregator import aggregate_reviews
 from backend_python.logger import logger
 from backend_python.processing.context import CodeContext
 from backend_python.ai.ai_agents import handle_syntax, handle_sematics, handle_best_practices, handle_security
@@ -37,14 +39,16 @@ async def code_review_service(chunked_context: List[CodeContext]):
                 except Exception as e: 
                     logger.error(f"{agent.__name__} failed: {e}")
 
-            # TODO 
-            
-            # aggregator function for the final code review
 
-            # May need to chunk in postprocessing before aggregator function
-                # or heirachical priority given to syntax, semantics, security then best practices
+            aggregated = aggregate_reviews(
+                    code_contexts=chunked_context,
+                    reviews=[results]
+                )
 
-        
+
+            final_output = await final_ai_call(aggregated)
+
+            return final_output 
     
     except Exception as e: 
         logger.warning(f"AI agents failed to process the code - {e}")

@@ -2,7 +2,8 @@ import os
 import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
-
+from typing import Dict
+from backend_python.processing.context import ReviewContext
 from exceptions.exceptions import OpenAiProcessingError
 from prompts import SYSTEM_PROMPT
 
@@ -31,3 +32,45 @@ def openai_call(input_prompt: str):
         raise OpenAiProcessingError(f"OpenAI API call failed: {str(e)}")
 
     return response.output_text
+
+
+
+async def final_ai_call(aggregated: Dict[str, ReviewContext]):
+    """
+    Combines all reviews and calls the LLM for a final coherent summary.
+    """
+
+    # Build a total report
+    report = ""
+    for chunk_id, review in aggregated.items():
+        report += f"\n### Chunk {chunk_id}\n"
+
+        if review.syntax:
+            report += f"\n**Syntax Review:**\n{review.syntax}\n"
+        if review.semantics:
+            report += f"\n**Semantics Review:**\n{review.semantics}\n"
+        if review.best_practices:
+            report += f"\n**Best Practices:**\n{review.best_practices}\n"
+        if review.security:
+            report += f"\n**Security:**\n{review.security}\n"
+
+    final_prompt = f"""
+You are an expert code reviewer.
+
+You will now create a final, unified code review based on the following chunk-level agent feedback:
+
+{report}
+
+Return a **single coherent, structured review** with:
+- A high-level summary
+- Per-chunk conclusions
+- Overall assessment
+- Suggested rewritten code sections (if needed)
+"""
+
+    polished = await openai_call(final_prompt)
+
+    return {
+        "chunks": aggregated,
+        "final_review": polished
+    }

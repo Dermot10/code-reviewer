@@ -16,8 +16,8 @@ async def analyse(submitted_code: str) -> Dict[str, Any]:
         Accepts editor code submit, processes the contents, and returns an analysis/summary
         """
 
-    chunkedContext = extract_chunks(submitted_code)
-    response = await Execute(chunkedContext)
+    chunked_context = extract_chunks(submitted_code)
+    response = await Execute(chunked_context)
     return postprocess(response)
    
 
@@ -31,8 +31,8 @@ async def analyse(submitted_code: str) -> FileResponse:
 
     """
  
-    chunkedContext = extract_chunks(submitted_code)
-    response = await Execute(chunkedContext)
+    chunked_context = extract_chunks(submitted_code)
+    response = await Execute(chunked_context)
 
     # returns analysis from openai
 
@@ -48,9 +48,9 @@ async def analyse(file: UploadFile) -> Dict[str, Any]:
 
     """
 
-    chunkedContext = process_uploaded_file(file)
+    chunked_context = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunkedContext)
+    response = await Execute(chunked_context)
 
     # return response
 
@@ -64,9 +64,9 @@ async def analyse(file: UploadFile) -> FileResponse:
 
     """
 
-    chunkedContext = process_uploaded_file(file)
+    chunked_context = process_uploaded_file(file)
     # returns analysis from openai
-    response = await Execute(chunkedContext)
+    response = await Execute(chunked_context)
 
     # repackage into a file
 

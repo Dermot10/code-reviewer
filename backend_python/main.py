@@ -8,7 +8,9 @@ app.mount("/metrics", make_asgi_app())
 
 
 if __name__ == "__main__": 
-    
+    import sys
+    print(sys.executable)
+
     print("Hello World")
 
 
@@ -17,12 +19,12 @@ if __name__ == "__main__":
 
 # Done: preprocessing - chunking 
 
-# aggregator
+# Done: aggregator
 
 # add aggregator to service code, may require chunking 
 
 # postprocessing
-    # json results
+    # Done: json results
     # file postprocessing to package as correct code file
 
 # testing 

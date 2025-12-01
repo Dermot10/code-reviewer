@@ -6,7 +6,7 @@ class CodeContext(BaseModel):
     file_path: str
     chunk_id: str
     code: str
-    langaugae: str
+    ext: str
     imports: List[str] = []
     dependencies: List[str] = []
     embedding_vector: List[float] = []
