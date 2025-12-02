@@ -26,4 +26,4 @@ Visiting the node first, then it's children
 
 # Other-
 
-pip install fastapi uvicorn openai pydantic dotenv prometheus-client
+pip install fastapi uvicorn openai pydantic dotenv prometheus-client python-multipart

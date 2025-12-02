@@ -4,8 +4,8 @@ from openai import OpenAI
 from dotenv import load_dotenv
 from typing import Dict
 from backend_python.processing.context import ReviewContext
-from exceptions.exceptions import OpenAiProcessingError
-from prompts import SYSTEM_PROMPT
+from backend_python.exceptions.exceptions import OpenAiProcessingError
+from backend_python.ai.prompts import SYSTEM_PROMPT
 
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -68,7 +68,7 @@ Return a **single coherent, structured review** with:
 - Suggested rewritten code sections (if needed)
 """
 
-    polished = await openai_call(final_prompt)
+    polished = openai_call(final_prompt)
 
     return {
         "chunks": aggregated,

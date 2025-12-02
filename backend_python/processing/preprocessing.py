@@ -46,7 +46,13 @@ def extract_chunks(file_path: str, code: str = "editor_input") -> List[CodeConte
 
     # Only parse Python code; fallback for other languages
     if ext != "py":
-        return [CodeContext(file_path, "0", code, language=ext)]
+        return [CodeContext(
+            file_path=file_path,
+            chunk_id="0", 
+            code=code, 
+            ext=ext
+            )
+        ]
 
     chunks = []
 

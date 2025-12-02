@@ -4,21 +4,27 @@ from fastapi.responses import FileResponse
 from backend_python.processing.postprocessing import postprocess
 from backend_python.processing.preprocessing import extract_chunks, process_uploaded_file
 from backend_python.service.service import Execute
+from pydantic import BaseModel
 
-review_router = APIRouter(prefix="/review", tags=["review"])
+review_router = APIRouter(prefix="/analyse", tags=["analysis"])
+
+
+
+class CodeRequest(BaseModel):
+    submitted_code: str
 
 
 @review_router.post("/code")
-async def analyse(submitted_code: str) -> Dict[str, Any]:
+async def analyse(payload: CodeRequest) -> Dict[str, Any]:
     """
         Primary API endpoint for file analysis.
 
         Accepts editor code submit, processes the contents, and returns an analysis/summary
         """
 
-    chunked_context = extract_chunks(submitted_code)
+    chunked_context = extract_chunks(payload.submitted_code)
     response = await Execute(chunked_context)
-    return postprocess(response)
+    return await postprocess(response)
    
 
 

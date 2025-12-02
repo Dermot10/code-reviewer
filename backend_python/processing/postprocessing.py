@@ -10,7 +10,7 @@ async def postprocess(final_review: str):
     return {"review": final_review}
 
 
-async def postprocess(final_review: str):
+async def postprocess_file(final_review: str):
     file_path = f"/tmp/review_{uuid.uuid4()}.txt"
     with open(file_path, "w") as f:
         f.write(final_review)
