@@ -52,6 +52,6 @@ async def handle_agent(
     for context in code_contexts:
         ai_prompt = f"{prompt}\n\n{context.code}"
         review = ReviewContext(chunk_id = context.chunk_id)
-        setattr(review, strategy,await openai_call(ai_prompt)),
-        results.append(review)
+        setattr(review, strategy, await openai_call(ai_prompt)),
+        results.append(review) # may extend into one final result
     return results

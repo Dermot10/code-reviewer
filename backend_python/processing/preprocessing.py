@@ -57,6 +57,7 @@ def extract_chunks(file_path: str, code: str = "editor_input") -> List[CodeConte
 
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            #file line starts at 1, strings start at 0
             start = node.lineno - 1
             end = node.end_lineno - 1 if hasattr(node, "end_lineno") else start
             block = "\n".join(code.splitlines()[start:end + 1])

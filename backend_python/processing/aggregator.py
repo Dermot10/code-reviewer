@@ -21,6 +21,7 @@ def aggregate_reviews(
         for field in ReviewContext.model_fields:
             value = getattr(review, field)
             if value is not None:
+                # add the agent's specific work to the final 
                 setattr(target, field, value)
 
     return final
