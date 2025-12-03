@@ -3,6 +3,7 @@ import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import Dict
+from backend_python.ai.review_schema import ReviewResponse
 from backend_python.processing.context import ReviewContext
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 from backend_python.ai.prompts import SYSTEM_PROMPT
@@ -23,15 +24,20 @@ def openai_call(input_prompt: str):
     """
     try:
         # must be synchronous, to allow LLM to complete text generation
-        response = client.responses.create(
+        response = client.responses.parse(
             model=os.getenv("MODEL"),
-            instructions=SYSTEM_PROMPT,
-            input=input_prompt
+            input=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": input_prompt},
+            ],
+            text_format=ReviewResponse
         )
+
+        review = response.output_parsed
     except Exception as e:
         raise OpenAiProcessingError(f"OpenAI API call failed: {str(e)}")
 
-    return response.output_text
+    return review
 
 
 
@@ -55,7 +61,7 @@ async def final_ai_call(aggregated: Dict[str, ReviewContext]):
             report += f"\n**Security:**\n{review.security}\n"
 
     final_prompt = f"""
-You are an expert code reviewer.
+You are an expert python code reviewer.
 
 You will now create a final, unified code review based on the following chunk-level agent feedback:
 

@@ -22,9 +22,12 @@ async def analyse(payload: CodeRequest) -> Dict[str, Any]:
         Accepts editor code submit, processes the contents, and returns an analysis/summary
         """
 
-    chunked_context = extract_chunks(payload.submitted_code)
+    chunked_context = extract_chunks(code=payload.submitted_code)
+    print("")
+    print(chunked_context)
+    print("")
     response = await Execute(chunked_context)
-    return await postprocess(response)
+    return postprocess(response)
    
 
 

@@ -4,16 +4,15 @@
 
 import uuid
 import json
+from typing import Dict
 from fastapi.responses import FileResponse
 
 
-async def postprocess(final_review: str):
-    data = json.loads(final_review)
+def postprocess(final_review):
     return {
-        "feedback": data["feedback"], 
-        "issues": data.get("issues",[])
-        }
-
+        "feedback": final_review["feedback"],
+        "issues": final_review.get("issues", [])
+    }
 
 async def postprocess_file(final_review: str):
     file_path = f"/tmp/review_{uuid.uuid4()}.txt"

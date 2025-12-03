@@ -15,7 +15,8 @@
 # add lang specific rules
 # Use language server protocols (LSP) later if you want deeper static analysis
 import ast
-from typing import List
+from uuid import uuid4
+from typing import List, Optional
 from backend_python.processing.context import CodeContext
 from backend_python.metrics import CHUNKING_FAILURES, FILE_EXTRACTION_ERRORS
 
@@ -41,32 +42,36 @@ def process_uploaded_file(file_path: str) -> List[CodeContext]:
     chunks = extract_chunks(code_body, file_path=file_path)
     return chunks
 
-def extract_chunks(file_path: str, code: str = "editor_input") -> List[CodeContext]:
-    ext = file_path.split(".")[-1].lower()
+def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContext]:
+    """
+    Extract code chunks for processing.
 
-    # Only parse Python code; fallback for other languages
-    if ext != "py":
-        return [CodeContext(
-            file_path=file_path,
-            chunk_id="0", 
-            code=code, 
-            ext=ext
-            )
-        ]
+    Args:
+        code: The Python code to process.
+        file_path: Optional path of the file the code came from.
 
+    Returns:
+        List of CodeContext instances.
+    """
     chunks = []
-
+    path = file_path or ""
     try:
         tree = ast.parse(code)
     except Exception:
-        return [CodeContext(file_path, "0", code, language=ext)]
-
+        return [
+            CodeContext (
+            file_path=path, 
+            chunk_id=str(uuid4()),
+            code=code
+            )
+        ]
+    lines = code.splitlines() 
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             #file line starts at 1, strings start at 0
             start = node.lineno - 1
             end = node.end_lineno - 1 if hasattr(node, "end_lineno") else start
-            block = "\n".join(code.splitlines()[start:end + 1])
+            block = "\n".join(lines[start:end + 1])
 
             # Use node type and name for chunk ID if available
             name = getattr(node, "name", f"node_{start}")
@@ -74,15 +79,14 @@ def extract_chunks(file_path: str, code: str = "editor_input") -> List[CodeConte
 
             chunks.append(
                 CodeContext(
-                    file_path=file_path,
+                    file_path=file_path or "",
                     chunk_id=chunk_id,
-                    code=block,
-                    ext=ext
+                    code=block
                 )
             )
 
     # Fallback: whole file if no classes/functions
     if not chunks:
-        chunks.append(CodeContext(file_path, "0", code, language=ext))
+        chunks.append(CodeContext(file_path, "0", code))
 
     return chunks
