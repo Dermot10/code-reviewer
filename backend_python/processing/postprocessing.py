@@ -3,11 +3,16 @@
 
 
 import uuid
+import json
 from fastapi.responses import FileResponse
 
 
 async def postprocess(final_review: str):
-    return {"review": final_review}
+    data = json.loads(final_review)
+    return {
+        "feedback": data["feedback"], 
+        "issues": data.get("issues",[])
+        }
 
 
 async def postprocess_file(final_review: str):
@@ -22,4 +27,4 @@ async def postprocess_file(final_review: str):
     )
 
 
-#extension for select langauages to create the correc file type 
+#extension for select langauages to create the correct file type 

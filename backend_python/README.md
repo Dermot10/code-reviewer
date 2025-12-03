@@ -18,6 +18,12 @@ root (file)
 ├─ FunctionDef: add
 └─ AsyncFunctionDef: async_task
 
+The AST library is used for parsing the python code. Like all efficient parsers dfs is used internally
+
+BFS logic for ast walk-
+done to identify all major chunks first,
+then extract their code
+
 ## Algorithm
 
 DFS algorithm looks to traverse the tree prioritsing a vertical traversal pattern.

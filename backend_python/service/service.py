@@ -23,8 +23,8 @@ async def code_review_service(chunked_context: List[CodeContext]):
     chain = [
         handle_syntax,
         handle_sematics,
-        handle_security,
-        handle_best_practices
+        # handle_security,
+        # handle_best_practices
     ]
 
     results = []
