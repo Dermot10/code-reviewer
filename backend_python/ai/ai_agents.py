@@ -2,7 +2,7 @@ from typing import List
 
 from backend_python.ai.ai_client import openai_call
 from backend_python.ai.prompts import SYNTAX_PROMPT, BEST_PRACTICES_PROMPT, SEMANTIC_PROMPT, SECURITY_PROMPT
-from backend_python.processing.preprocessing import CodeContext, ReviewContext
+from backend_python.processing.context import CodeContext, ReviewContext
 from backend_python.metrics import SYNTAX_ERRORS, SEMANTICS_ERRORS, BEST_PRACTICES_ERRORS, SECURITY_ERRORS
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 

@@ -8,7 +8,7 @@ from backend_python.processing.aggregator import aggregate_reviews
 from backend_python.logger import logger
 from backend_python.processing.context import CodeContext
 from backend_python.ai.ai_agents import handle_syntax, handle_sematics, handle_best_practices, handle_security
-from metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
+from backend_python.metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
 
 
 async def Execute(chunked_code: List[CodeContext]):
@@ -23,8 +23,8 @@ async def code_review_service(chunked_context: List[CodeContext]):
     chain = [
         handle_syntax,
         handle_sematics,
-        handle_security,
-        handle_best_practices
+        # handle_security,
+        # handle_best_practices
     ]
 
     results = []
