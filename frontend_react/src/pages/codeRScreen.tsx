@@ -4,9 +4,9 @@ import ErrorPanel from "../components/errorPanel";
 import { useState, useEffect } from "react";
 import "../index.css";
 
+const AppStates = ["idle", "submitting", "results", "error"] as const;
 type AppState = (typeof AppStates)[number];
 type ReviewResponse = { feedback: string; issues: any[] };
-const AppStates = ["idle", "submitting", "results", "error"] as const;
 
 export default function MainScreen() {
   const [currentState, setCurrentState] = useState<AppState>("idle");
@@ -102,7 +102,6 @@ export default function MainScreen() {
   );
 }
 
-// submitCode stays outside the component
 async function submitCode(code: string): Promise<ReviewResponse> {
   const res = await fetch("http://localhost:8080/review-code", {
     method: "POST",

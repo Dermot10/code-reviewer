@@ -17,9 +17,9 @@ class CodeRequest(BaseModel):
 @review_router.post("/code")
 async def analyse(payload: CodeRequest) -> Dict[str, Any]:
     """
-        Primary API endpoint for file analysis.
+        Primary API endpoint for code analysis.
 
-        Accepts editor code submit, processes the contents, and returns an analysis/summary
+        Accepts editor code submit, processes the contents, and returns an analysis
         """
 
     chunked_context = extract_chunks(code=payload.submitted_code)
