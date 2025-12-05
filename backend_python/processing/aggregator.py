@@ -1,5 +1,5 @@
 from typing import Dict, List
-from backend_python.processing.context import CodeContext, ReviewContext
+from backend_python.schema.context import CodeContext, ReviewContext
 
 def aggregate_reviews(
     code_contexts: List[CodeContext], 

@@ -70,7 +70,7 @@ func (h *CodeReviewHandler) ReviewFile(w http.ResponseWriter, r *http.Request) {
 
 	fileBytes, err := io.ReadAll(file)
 	if err != nil || len(fileBytes) == 0 {
-		http.Error(w, "fiel is empty or unreadable", http.StatusBadRequest)
+		http.Error(w, "file is empty or unreadable", http.StatusBadRequest)
 		return
 	}
 }

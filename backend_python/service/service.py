@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from backend_python.ai.ai_client import final_ai_call
 from backend_python.processing.aggregator import aggregate_reviews
 from backend_python.logger import logger
-from backend_python.processing.context import CodeContext, ReviewContext
+from backend_python.schema.context import CodeContext, ReviewContext
 from backend_python.ai.ai_agents import handle_syntax, handle_sematics, handle_best_practices, handle_security
 from backend_python.metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
 
@@ -39,10 +39,10 @@ async def code_review_service(chunked_context: List[CodeContext]) -> Dict[str, s
                 except Exception as e: 
                     logger.error(f"{agent.__name__} failed: {e}")
             print("")
-            print(f"The extended results from the agent call ---->> {results}")
+            print(f"The extended results from the agent call ---->> \n{results}")
             print("")
         aggregated_results = aggregate_to_preprocess(results)
-        print(f"The aggregated results to be postprocessed ---->> {aggregated_results}")
+        print(f"The aggregated results to be postprocessed ---->> \n{aggregated_results}")
         
         return aggregated_results
     
@@ -68,14 +68,7 @@ def aggregate_to_preprocess(results: List[ReviewContext]) -> Dict:
                 if hasattr(val, "feedback") and val.feedback:
                     feedback_lines.append(val.feedback)
 
-    # combine all feedbacks into a single concise string
-    combined_feedback = " | ".join(feedback_lines) if feedback_lines else "No issues found."
+    
+    combined_feedback = "\n\n".join(feedback_lines)
 
     return {"feedback": combined_feedback, "issues": issues}
-
-
-# final report logic
-# aggregated = aggregate_reviews(
-            #         code_contexts=chunked_context,
-            #         reviews=[results]
-            #     )

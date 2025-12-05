@@ -6,6 +6,7 @@ Your responsibilities:
 - Be concise and actionable.
 - Never hallucinate information about code you cannot see.
 - Produce a single short line per code chunk summarizing issues and improvements.
+- The global imported are added for wider context. 
 
 Required JSON format:
 {

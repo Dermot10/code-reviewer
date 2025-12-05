@@ -4,43 +4,26 @@
 # preserve imports, relationship
 # relevant points to LLM
 
-# segment for LLM agents, chain of responsibility pattern
-# Syntax & structure pass → highlight obvious issues
-# Semantic analysis pass → logic flaws, bugs, confusion
-# Best practices pass → style, clarity, naming
-# Security pass → SQL injection, unsafe file handling, etc
 
-
-# Language support
-# add lang specific rules
-# Use language server protocols (LSP) later if you want deeper static analysis
 import ast
 from uuid import uuid4
 from typing import List, Optional
-from backend_python.processing.context import CodeContext
+from backend_python.schema.context import CodeContext
 from backend_python.metrics import CHUNKING_FAILURES, FILE_EXTRACTION_ERRORS
 
 
-def process_uploaded_file(file_path: str) -> List[CodeContext]:
-    """
-    Reads a code file and returns a list of CodeContext chunks.
+def extract_globals(tree: ast.AST, code_lines: list[str]) -> list[str]:
+    globals_found = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            # simple global assignment
+            targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
+            for t in targets:
+                globals_found.append(f"{t} = {code_lines[node.lineno - 1].strip()}")
+        if isinstance(node, ast.FunctionDef) and node.name == "__all__":
+            globals_found.append("__all__ defined")
+    return globals_found
 
-    Args:
-        file_path (str): Path to the uploaded file.
-
-    Returns:
-        List[CodeContext]: One chunk per function/class (or whole file fallback)
-    """
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            code_body = f.read()
-    except Exception as e:
-        FILE_EXTRACTION_ERRORS.inc()
-        raise ValueError(f"Failed to read file {file_path}: {str(e)}")
-
-    # Use your existing chunking function
-    chunks = extract_chunks(code_body, file_path=file_path)
-    return chunks
 
 def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContext]:
     """
@@ -51,24 +34,28 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
         file_path: Optional path of the file the code came from.
 
     Returns:
-        List of CodeContext instances.
+        List[CodeContext]: One chunk per function/class, a chunk being a code block
     """
     chunks = []
     path = file_path or ""
+
     try:
-        tree = ast.parse(code)
+        tree = ast.parse(code) 
     except Exception:
         return [
             CodeContext (
             file_path=path, 
             chunk_id=str(uuid4()),
-            code=code
+            code=code,
             )
         ]
+    tree = ast.parse(code)
     lines = code.splitlines() 
+    globals_list = extract_globals(tree, lines)
+
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            #file line starts at 1, strings start at 0
+            # file line starts at 1, strings start at 0
             start = node.lineno - 1
             end = node.end_lineno - 1 if hasattr(node, "end_lineno") else start
             block = "\n".join(lines[start:end + 1])
@@ -79,9 +66,10 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
 
             chunks.append(
                 CodeContext(
-                    file_path=file_path or "",
+                    file_path=path,
                     chunk_id=chunk_id,
-                    code=block
+                    code=block,
+                    globals=globals_list,
                 )
             )
 
@@ -89,4 +77,26 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
     if not chunks:
         chunks.append(CodeContext(file_path, "0", code))
 
+    return chunks
+
+
+def process_uploaded_file(file_path: str) -> List[CodeContext]:
+    """
+    Reads a python file and returns a list of CodeContext chunks.
+
+    Args:
+        file_path (str): Path to the uploaded file.
+
+    Returns:
+        List[CodeContext]: One chunk per function/class
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            code_body = f.read()
+    except Exception as e:
+        FILE_EXTRACTION_ERRORS.inc()
+        raise ValueError(f"Failed to read file {file_path}: {str(e)}")
+
+    # Use your existing chunking function
+    chunks = extract_chunks(code_body, file_path=file_path)
     return chunks

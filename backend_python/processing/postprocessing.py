@@ -14,16 +14,14 @@ def postprocess(final_review):
         "issues": final_review.get("issues", [])
     }
 
-async def postprocess_file(final_review: str):
-    file_path = f"/tmp/review_{uuid.uuid4()}.txt"
-    with open(file_path, "w") as f:
+def postprocess_md(final_review):
+    file_path = f"/tmp/review_{uuid.uuid4()}.md"
+
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(final_review)
 
     return FileResponse(
-        file_path,
-        media_type="text/plain",
-        filename="code_review.txt"
+        path=file_path,
+        media_type="text/markdown",
+        filename="code_review.md"
     )
-
-
-#extension for select langauages to create the correct file type 

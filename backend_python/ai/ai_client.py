@@ -3,8 +3,8 @@ import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
 from typing import Dict
-from backend_python.ai.review_schema import ReviewResponse
-from backend_python.processing.context import ReviewContext
+from backend_python.schema.context import ReviewResponse
+from backend_python.schema.context import ReviewContext
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 from backend_python.ai.prompts import SYSTEM_PROMPT
 
