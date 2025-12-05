@@ -45,25 +45,48 @@ export default function MainScreen() {
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) setCode(event.target.result as string);
-    };
-    reader.readAsText(file);
+    try{
+      const file = e.target.files?.[0];
+      if (!file)return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) setCode(event.target.result as string);
+
+      };
+      reader.readAsText(file)
+    }catch(err){
+      console.error("File upload failed:", err);
+      setCurrentState("error")
+    }
   }
 
   return (
     <div className="app-root">
       <header className="app-header">
-        <h1>Python Reviewer</h1>
-        <button
-          className="theme-toggle"
-          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-        >
-          {theme === "light" ? "🌙" : "☀️"}
-        </button>
+        <div className="header-left">
+          <h1>Python Reviewer</h1>
+            </div>
+              <div className="header-right">
+                <button
+                  className="theme-toggle"
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                  >
+                  {theme === "light" ? "🌙" : "☀️"}
+                </button>
+                <input
+                  type="file"
+                  id="file-upload"
+                  style={{ display: "none"}}
+                  onChange={handleFileUpload}
+              />
+            <button 
+              className="upload-button"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
+              📁 Upload
+            </button>
+        </div>
       </header>
 
       <main className="main-container">
