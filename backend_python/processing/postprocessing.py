@@ -2,12 +2,6 @@
 # file output
 
 
-import uuid
-import json
-from typing import Dict
-from fastapi.responses import FileResponse
-
-
 def postprocess_review(final_review):
     return {
         "feedback": final_review["feedback"],

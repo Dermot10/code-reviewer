@@ -1,7 +1,7 @@
 import io 
 import csv
 import json
-from backend_python.schema.context import ExportType, ReviewResponse
+from backend_python.schema.context import ReviewResponse
 
 
 def render_review_to_text(review: ReviewResponse) -> str:

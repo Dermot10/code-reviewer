@@ -2,12 +2,12 @@ from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse
 from backend_python.schema.context import CodeRequest, ExportType, ReviewResponse
-from backend_python.processing.postprocessing import postprocess_review, process_md
-from backend_python.processing.preprocessing import extract_chunks, process_uploaded_file
+from backend_python.processing.postprocessing import postprocess_review
+from backend_python.processing.preprocessing import extract_chunks
 from backend_python.service.export_service import Exceute_export
 from backend_python.service.review_service import Execute_review
 from backend_python.service.code_quality_service import Execute_enhance
-from pydantic import BaseModel
+
 
 review_router = APIRouter(prefix="/analyse", tags=["analysis"])
 
@@ -50,7 +50,7 @@ async def export_review_md(review: ReviewResponse) -> FileResponse:
     Download analysis from the submitted editor code.
 
     """
-    export_choice = ExportType.MD
+    export_choice = ExportType.MD.value
     export_file = Exceute_export(export_choice, review)
     return export_file
 
@@ -61,7 +61,7 @@ async def export_review_json(review: ReviewResponse) -> FileResponse:
     Download analysis as json file.
 
     """
-    export_choice = ExportType.JSON
+    export_choice = ExportType.JSON.value
     export_file = Exceute_export(export_choice, review)
     return export_file
     
@@ -72,7 +72,7 @@ async def export_review_csv(review: ReviewResponse) -> FileResponse:
     Download analysis as csv file.
 
     """
-    export_choice = ExportType.CSV
+    export_choice = ExportType.CSV.value
     export_file = Exceute_export(export_choice, review)
     return export_file
     
@@ -83,7 +83,7 @@ async def export_review_txt(review: ReviewResponse) -> FileResponse:
     Download analysis as txt file.
 
     """
-    export_choice = ExportType.TXT
+    export_choice = ExportType.TXT.value
     export_file = Exceute_export(export_choice, review)
     return export_file
 

@@ -8,9 +8,9 @@ from backend_python.processing.fileprocessing import process_md, process_txt, pr
 from backend_python.processing.renderer import render_review_to_text, render_review_to_json ,render_review_to_csv
 
 
-async def Exceute_export(export_type: str, review: ReviewResponse) -> FileResponse:
+def Exceute_export(export_type: str, review: ReviewResponse) -> FileResponse:
     try: 
-        response_file = await export_file_service(export_type, review)
+        response_file = export_file_service(export_type, review)
         return response_file
     except Exception as e: 
         logger.warning(f"failed to execute export file service - {e}")
@@ -19,36 +19,38 @@ async def Exceute_export(export_type: str, review: ReviewResponse) -> FileRespon
 
 def export_file_service(export_type: str, review: ReviewResponse) -> FileResponse: 
     try: 
-        if export_type == ExportType.MD:
+        if export_type == ExportType.MD.value:
             final_review = render_review_to_text(review)
             file_response = process_md(export_type, final_review)
-            print("Exporting as .md file")
+            print("exporting as .md file")
             return file_response
 
-        elif export_type == ExportType.TXT:
+        elif export_type == ExportType.TXT.value:
             final_review = render_review_to_text(review)
             file_response = process_txt(export_type, review)
-            print("Exporting as .txt file")
+            print("exporting as .txt file")
             return file_response
 
-        elif export_type == ExportType.CSV:
+        elif export_type == ExportType.CSV.value:
             final_review = render_review_to_csv(review)
             file_response = process_csv(export_type, review)
-            print("Exporting as .csv file")
+            print("exporting as .csv file")
             return file_response
 
-        elif export_type == ExportType.JSON:
+        elif export_type == ExportType.JSON.value:
             final_review = render_review_to_json(review)
             file_response = process_json(export_type, review)
-            print("Exporting as .json file")
+            print("exporting as .json file")
             return file_response
+        
+        ## This extension will be used for best_practices ai service to package .py files
         
         # elif export_type == ExportType.PY:
         #     file_response = process_py(export_type, review)
         #     print("Exporting as .py file")
         #     return file_response
         else: 
-            print(f"unknown export typ {export_type}")
+            print(f"unknown export type - {export_type}")
             return
 
     except FileProcessingError as e: 
