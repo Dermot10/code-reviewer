@@ -51,8 +51,8 @@ async def export_review_md(review: ReviewResponse) -> FileResponse:
 
     """
     export_choice = ExportType.MD
-    export_file = Exceute_export(export_choice)
-    return
+    export_file = Exceute_export(export_choice, review)
+    return export_file
 
 
 @review_router.post("/export-json")
@@ -62,8 +62,8 @@ async def export_review_json(review: ReviewResponse) -> FileResponse:
 
     """
     export_choice = ExportType.JSON
-    export_file = Exceute_export(export_choice)
-    return 
+    export_file = Exceute_export(export_choice, review)
+    return export_file
     
 
 @review_router.post("/export-csv")
@@ -73,8 +73,8 @@ async def export_review_csv(review: ReviewResponse) -> FileResponse:
 
     """
     export_choice = ExportType.CSV
-    export_file = Exceute_export(export_choice)
-    return
+    export_file = Exceute_export(export_choice, review)
+    return export_file
     
 
 @review_router.post("/export-txt")
@@ -84,8 +84,8 @@ async def export_review_txt(review: ReviewResponse) -> FileResponse:
 
     """
     export_choice = ExportType.TXT
-    export_file = Exceute_export(export_choice)
-    return
+    export_file = Exceute_export(export_choice, review)
+    return export_file
 
 # @review_router.post("-multiple/")
 # async def upload_files(files: Annotated[List[UploadFile], File(description="Series of code files to be analysed by the LLM integration")] | None = None):
