@@ -1,7 +1,7 @@
 import CodeEditor from "../components/codeEditor";
 import ResultsPanel from "../components/resultsPanel";
 import ErrorPanel from "../components/errorPanel";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type HtmlHTMLAttributes } from "react";
 import "../index.css";
 
 const AppStates = ["idle", "submitting", "results", "error"] as const;
@@ -61,6 +61,37 @@ export default function MainScreen() {
     }
   }
 
+  async function handleExport(){
+    try{
+      setCurrentState("submitting");
+
+      const res = await fetch("http://localhost:8080/review-code/download-md", {
+        method: "POST", 
+        headers: {"Content-Type": "application/json"}, 
+        body: JSON.stringify(review),
+      });
+
+      if (!res.ok) throw new Error("Export failed");
+
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "code_review.md";
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+
+      setCurrentState("results");
+
+    }catch(err){
+      console.error("Export failed:", err);
+      setCurrentState("error")
+    }
+  }
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -85,6 +116,12 @@ export default function MainScreen() {
               onClick={() => document.getElementById("file-upload")?.click()}
             >
               📁 Upload
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={currentState === "submitting"}
+            >
+              Export as Markdown
             </button>
         </div>
       </header>
@@ -137,3 +174,4 @@ async function submitCode(code: string): Promise<ReviewResponse> {
   }
   return await res.json();
 }
+

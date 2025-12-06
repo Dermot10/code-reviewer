@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type CodeReviewHandler struct{}
@@ -48,29 +47,28 @@ func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 	w.Write(respBody)
 }
 
-func (h *CodeReviewHandler) ReviewFile(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20) // set max memory to ~10MB
+func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "failed to parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	file, fileHeader, err := r.FormFile("file")
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8000/analyse/export-md", bytes.NewReader(body))
 	if err != nil {
-		http.Error(w, "file not provided", http.StatusBadRequest)
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	defer file.Close()
+	req.Header.Set("Content-Type", "application/json")
 
-	fileName := fileHeader.Filename
-	if !strings.HasSuffix(fileName, "py") {
-		http.Error(w, "only .py files are allowed for review", http.StatusBadRequest)
+	resp, err := client.Do(req)
+	if err != nil {
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 		return
 	}
+	defer resp.Body.Close()
 
-	fileBytes, err := io.ReadAll(file)
-	if err != nil || len(fileBytes) == 0 {
-		http.Error(w, "file is empty or unreadable", http.StatusBadRequest)
-		return
-	}
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.Header().Set("Content-Disposition", resp.Header.Get("Content-Disposition"))
+	io.Copy(w, resp.Body)
 }
