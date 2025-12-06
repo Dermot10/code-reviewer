@@ -3,20 +3,18 @@
 # metrics 
 from typing import List, Dict, Any
 from fastapi import HTTPException
-from backend_python.ai.ai_client import final_ai_call
-from backend_python.processing.aggregator import aggregate_reviews
 from backend_python.logger import logger
 from backend_python.schema.context import CodeContext, ReviewContext
 from backend_python.ai.ai_agents import handle_syntax, handle_sematics, handle_best_practices, handle_security
 from backend_python.metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
 
 
-async def Execute(chunked_code: List[CodeContext]) -> Dict[str, str]:
+async def Execute_review(chunked_code: List[CodeContext]) -> Dict[str, str]:
     try: 
         output = await code_review_service(chunked_code)
         return output
     except Exception as e: 
-        logger.warning(f"failed to execute code review process - {e}")
+        logger.warning(f"failed to execute code review service - {e}")
         raise 
 
 async def code_review_service(chunked_context: List[CodeContext]) -> Dict[str, str]:

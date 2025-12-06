@@ -1,6 +1,14 @@
 from typing import List
 from pydantic import BaseModel
+from enum import Enum
 
+
+class ExportType(Enum): 
+    MD = "markdown"
+    TXT = "txt"
+    CSV = "csv"
+    JSON = "json"
+    PY = "py"
 
 class CodeRequest(BaseModel):
     submitted_code: str
@@ -14,7 +22,6 @@ class CodeContext(BaseModel):
     # dependencies: List[str] = []
     # embedding_vector: List[float] = []
 
-
 class ReviewContext(BaseModel): 
     chunk_id: str
     syntax: str | None = None 
@@ -22,13 +29,11 @@ class ReviewContext(BaseModel):
     best_practices: str | None = None
     security: str | None = None
 
-
 class Issue(BaseModel): 
     line: int 
     type: str # bug|security|style|other
     description: str 
 
-    
 class ReviewResponse(BaseModel): 
     feedback: str
     issues: List[Issue]
