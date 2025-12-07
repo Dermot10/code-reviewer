@@ -18,7 +18,7 @@ func setUpMux() *http.ServeMux {
 func registerRoutes(mux *http.ServeMux) {
 	CodeReviewHandler := handlers.NewCodeReviewHandler()
 	mux.HandleFunc("/review-code", CodeReviewHandler.ReviewCode)
-	mux.HandleFunc("/review-code/download-md", CodeReviewHandler.ExportReview)
+	mux.HandleFunc("/review-code/download", CodeReviewHandler.ExportReview)
 
 }
 

@@ -118,11 +118,11 @@ export default function MainScreen() {
               📁 Upload
             </button>
             <button
-              onClick={handleExport}
-              disabled={currentState === "submitting"}
+            onClick={() => handleExport(exportType)}
+            disabled={currentState !== "results"}
             >
-              Export as Markdown
-            </button>
+            Export
+          </button>
         </div>
       </header>
 
