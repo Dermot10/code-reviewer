@@ -13,6 +13,7 @@ export default function MainScreen() {
   const [code, setCode] = useState("");
   const [review, setReview] = useState<ReviewResponse | null>(null);
   const [copied, setCopied] = useState(false);
+  const [exportType, setExportType] = useState("md");
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
@@ -61,11 +62,11 @@ export default function MainScreen() {
     }
   }
 
-  async function handleExport(){
+  async function handleExport(type: string){
     try{
       setCurrentState("submitting");
 
-      const res = await fetch("http://localhost:8080/review-code/download-md", {
+      const res = await fetch(`"http://localhost:8080/review-code/download?type=${type}"`, {
         method: "POST", 
         headers: {"Content-Type": "application/json"}, 
         body: JSON.stringify(review),
@@ -79,7 +80,7 @@ export default function MainScreen() {
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = "code_review.md";
+      a.download = `"code_review.${type}"`;
       a.click();
 
       window.URL.revokeObjectURL(url);
@@ -117,12 +118,24 @@ export default function MainScreen() {
             >
               📁 Upload
             </button>
-            <button
-              onClick={handleExport}
-              disabled={currentState === "submitting"}
-            >
-              Export as Markdown
-            </button>
+                        
+            <div className="export-container">
+              <button
+                onClick={() => handleExport(exportType)}
+                disabled={currentState === "submitting"}
+              >
+                Export
+              </button>
+              <select
+                value={exportType}
+                onChange={(e) => setExportType(e.target.value)}
+              >
+                <option value="md">Markdown</option>
+                <option value="txt">Text</option>
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
+              </select>
+            </div>
         </div>
       </header>
 

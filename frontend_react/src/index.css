@@ -101,6 +101,12 @@ a:hover {
   justify-content: space-between;
 }
 
+.export-container {
+  display: flex;
+  gap: 0.5rem; /* space between select and button */
+  align-items: center;
+}
+
 .header-left{
   display: flex;
   align-items: center;
@@ -110,7 +116,7 @@ a:hover {
 .header-right{
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
 }
 
 .app-header h1 {
