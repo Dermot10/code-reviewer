@@ -27,19 +27,19 @@ def export_file_service(export_type: str, review: ReviewResponse) -> FileRespons
 
         elif export_type == ExportType.TXT.value:
             final_review = render_review_to_text(review)
-            file_response = process_txt(export_type, review)
+            file_response = process_txt(export_type, final_review)
             print("exporting as .txt file")
             return file_response
 
         elif export_type == ExportType.CSV.value:
             final_review = render_review_to_csv(review)
-            file_response = process_csv(export_type, review)
+            file_response = process_csv(export_type, final_review)
             print("exporting as .csv file")
             return file_response
 
         elif export_type == ExportType.JSON.value:
             final_review = render_review_to_json(review)
-            file_response = process_json(export_type, review)
+            file_response = process_json(export_type, final_review)
             print("exporting as .json file")
             return file_response
         

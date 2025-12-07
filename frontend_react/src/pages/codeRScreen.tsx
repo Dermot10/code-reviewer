@@ -66,13 +66,15 @@ export default function MainScreen() {
     try{
       setCurrentState("submitting");
 
-      const res = await fetch(`"http://localhost:8080/review-code/download?type=${type}"`, {
+      const res = await fetch(`http://localhost:8080/review-code/download?type=${type}`, {
         method: "POST", 
         headers: {"Content-Type": "application/json"}, 
         body: JSON.stringify(review),
       });
 
-      if (!res.ok) throw new Error("Export failed");
+      if (!res.ok) {
+        throw new Error(`Export failed: ${res.status}`);
+      }
 
 
       const blob = await res.blob()
@@ -80,7 +82,7 @@ export default function MainScreen() {
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `"code_review.${type}"`;
+      a.download = `code_review.${type}`;
       a.click();
 
       window.URL.revokeObjectURL(url);
@@ -120,9 +122,9 @@ export default function MainScreen() {
             </button>
                         
             <div className="export-container">
-              <button
+             <button
                 onClick={() => handleExport(exportType)}
-                disabled={currentState === "submitting"}
+                disabled={currentState !== "results"}
               >
                 Export
               </button>

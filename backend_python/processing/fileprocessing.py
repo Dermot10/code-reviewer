@@ -6,13 +6,11 @@ from fastapi.responses import FileResponse
 
 
 
-def create_file_path(export_type ,final_review): 
-    ext = export_type.lower()
-    file_path = f"/tmp/review_{uuid.uuid4()}.{ext}"
 
+def create_file_path(export_type: str, content: str) -> str:
+    file_path = f"/tmp/exported_review.{export_type.lower()}"
     with open(file_path, "w", encoding="utf-8") as f:
-        f.write(final_review)
-
+        f.write(content)
     return file_path
 
 def process_md(export_type, final_review):
@@ -24,7 +22,7 @@ def process_md(export_type, final_review):
         filename="code_review.md"
     )
 
-def process_txt(export_type, final_review):
+def process_txt(export_type: str, final_review):
     file_path = create_file_path(export_type, final_review)
 
     return FileResponse(

@@ -51,6 +51,7 @@ async def export_review_md(review: ReviewResponse) -> FileResponse:
 
     """
     export_choice = ExportType.MD.value
+    print(export_choice)
     export_file = Exceute_export(export_choice, review)
     return export_file
 

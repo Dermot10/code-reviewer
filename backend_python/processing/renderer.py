@@ -26,10 +26,11 @@ def render_review_to_csv(review: ReviewResponse) -> str:
     output = io.StringIO()
     writer = csv.writer(output)
 
-    writer.writerow(["line", "type", "description"])
+    writer.writerow(["Feedback", review.feedback])
+    writer.writerow([])
 
-
-    for issue in review.issues: 
-        writer.writerow[issue.line, issue.type, issue.description]
+    writer.writerow(["Line", "Type", "Description"])
+    for issue in review.issues:
+        writer.writerow([issue.line, issue.type, issue.description])
 
     return output.getvalue()
