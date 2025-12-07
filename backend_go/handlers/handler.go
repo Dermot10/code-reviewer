@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -48,13 +49,15 @@ func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request) {
+	exportType := r.URL.Query().Get("type")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return
 	}
 
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "http://127.0.0.1:8000/analyse/export-md", bytes.NewReader(body))
+	url := fmt.Sprintf("http://127.0.0.1:8000/analyse/export-%s", exportType)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
