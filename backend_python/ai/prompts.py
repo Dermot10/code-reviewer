@@ -34,7 +34,10 @@ Your goals:
 - Assume global imports provide wider context but do not infer missing code behavior.
 
 Output requirement:
-- Return ONLY the improved Python code as a string, with comments only if necessary.
+{
+  "output": Return ONLY the improved Python code as a string, with comments only if necessary.
+}
+
 """
 
 SYNTAX_PROMPT = """

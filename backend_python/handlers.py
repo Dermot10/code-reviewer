@@ -2,7 +2,7 @@ from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse
 from backend_python.schema.context import CodeRequest, ExportType, ReviewResponse
-from backend_python.processing.postprocessing import postprocess_review
+from backend_python.processing.postprocessing import postprocess_review, postprocess_enhanced
 from backend_python.processing.preprocessing import extract_chunks
 from backend_python.service.export_service import Exceute_export
 from backend_python.service.review_service import Execute_review
@@ -42,7 +42,7 @@ async def enhance_code(payload: CodeRequest) -> Dict[str, Any]:
     print(chunked_context)
     print("")
     response = await Execute_enhance(chunked_context)
-    return
+    return postprocess_enhanced(response)
 
 @review_router.post("/export-md")
 async def export_review_md(review: ReviewResponse) -> FileResponse:

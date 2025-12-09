@@ -39,4 +39,7 @@ class ReviewResponse(BaseModel):
     issues: List[Issue]
 
 
+class BestPracticesResponse(BaseModel): 
+    output: str
+
 

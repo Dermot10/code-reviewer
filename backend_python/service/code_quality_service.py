@@ -2,11 +2,11 @@
 
 # Returns: rewritten/improved code snippet.
 
-from typing import List, Dict, Any
-from fastapi import HTTPException
+from typing import List, Dict
 from backend_python.logger import logger
-from backend_python.schema.context import CodeContext, ReviewContext
+from backend_python.schema.context import CodeContext
 from backend_python.ai.ai_agents import handle_best_practices
+from backend_python.service.agent_service import agent_service, aggregate_python_output
 
 
 async def Execute_enhance(chunked_code: List[CodeContext]) -> Dict[str, str]: 
@@ -19,15 +19,13 @@ async def Execute_enhance(chunked_code: List[CodeContext]) -> Dict[str, str]:
 
 
 
-async def code_quality_service(chunked_code: List[CodeContext]) -> Dict[str, str]: 
-    # call the best practices agent and have the code returned in text format 
-    # additional prompting will be required
+async def code_quality_service(chunked_context: List[CodeContext]) -> Dict[str, str]: 
+
     chain = [
         handle_best_practices
     ]
 
-    results = []
-    pass
+    enhanced_code = agent_service(chain, chunked_context, aggregate_python_output)
 
+    return enhanced_code
 
-#logic to return the enhanced python code into one response
