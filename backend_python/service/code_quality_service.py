@@ -19,8 +19,6 @@ async def Execute_enhance(chunked_code: List[CodeContext]) -> Dict[str, str]:
 
 
 
-
-
 async def code_quality_service(chunked_code: List[CodeContext]) -> Dict[str, str]: 
     # call the best practices agent and have the code returned in text format 
     # additional prompting will be required

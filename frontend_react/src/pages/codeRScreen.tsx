@@ -1,7 +1,7 @@
 import CodeEditor from "../components/codeEditor";
 import ResultsPanel from "../components/resultsPanel";
 import ErrorPanel from "../components/errorPanel";
-import { useState, useEffect, type HtmlHTMLAttributes } from "react";
+import { useState, useEffect } from "react";
 import "../index.css";
 
 const AppStates = ["idle", "submitting", "results", "error"] as const;
@@ -46,38 +46,39 @@ export default function MainScreen() {
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    try{
+    try {
       const file = e.target.files?.[0];
-      if (!file)return;
+      if (!file) return;
 
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) setCode(event.target.result as string);
-
       };
-      reader.readAsText(file)
-    }catch(err){
+      reader.readAsText(file);
+    } catch (err) {
       console.error("File upload failed:", err);
-      setCurrentState("error")
+      setCurrentState("error");
     }
   }
 
-  async function handleExport(type: string){
-    try{
+  async function handleExport(type: string) {
+    try {
       setCurrentState("submitting");
 
-      const res = await fetch(`http://localhost:8080/review-code/download?type=${type}`, {
-        method: "POST", 
-        headers: {"Content-Type": "application/json"}, 
-        body: JSON.stringify(review),
-      });
+      const res = await fetch(
+        `http://localhost:8080/review-code/download?type=${type}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(review),
+        }
+      );
 
       if (!res.ok) {
         throw new Error(`Export failed: ${res.status}`);
       }
 
-
-      const blob = await res.blob()
+      const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
@@ -88,10 +89,9 @@ export default function MainScreen() {
       window.URL.revokeObjectURL(url);
 
       setCurrentState("results");
-
-    }catch(err){
+    } catch (err) {
       console.error("Export failed:", err);
-      setCurrentState("error")
+      setCurrentState("error");
     }
   }
 
@@ -100,44 +100,44 @@ export default function MainScreen() {
       <header className="app-header">
         <div className="header-left">
           <h1>Python Reviewer</h1>
-            </div>
-              <div className="header-right">
-                <button
-                  className="theme-toggle"
-                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                  >
-                  {theme === "light" ? "🌙" : "☀️"}
-                </button>
-                <input
-                  type="file"
-                  id="file-upload"
-                  style={{ display: "none"}}
-                  onChange={handleFileUpload}
-              />
-            <button 
-              className="upload-button"
-              onClick={() => document.getElementById("file-upload")?.click()}
+        </div>
+        <div className="header-right">
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          >
+            {theme === "light" ? "🌙" : "☀️"}
+          </button>
+          <input
+            type="file"
+            id="file-upload"
+            style={{ display: "none" }}
+            onChange={handleFileUpload}
+          />
+          <button
+            className="upload-button"
+            onClick={() => document.getElementById("file-upload")?.click()}
+          >
+            📁 Upload
+          </button>
+
+          <div className="export-container">
+            <button
+              onClick={() => handleExport(exportType)}
+              disabled={currentState !== "results"}
             >
-              📁 Upload
+              Export
             </button>
-                        
-            <div className="export-container">
-             <button
-                onClick={() => handleExport(exportType)}
-                disabled={currentState !== "results"}
-              >
-                Export
-              </button>
-              <select
-                value={exportType}
-                onChange={(e) => setExportType(e.target.value)}
-              >
-                <option value="md">Markdown</option>
-                <option value="txt">Text</option>
-                <option value="json">JSON</option>
-                <option value="csv">CSV</option>
-              </select>
-            </div>
+            <select
+              value={exportType}
+              onChange={(e) => setExportType(e.target.value)}
+            >
+              <option value="md">Markdown</option>
+              <option value="txt">Text</option>
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+            </select>
+          </div>
         </div>
       </header>
 
@@ -147,14 +147,19 @@ export default function MainScreen() {
         <div className="right-panel" id="results-panel">
           {currentState === "results" && review && (
             <>
-              <ResultsPanel result={review.feedback} onCopy={handleCopy} copied={copied} />
+              <ResultsPanel
+                result={review.feedback}
+                onCopy={handleCopy}
+                copied={copied}
+              />
               {review.issues.length > 0 && (
                 <div className="issues-panel">
                   <h3>Issues Found:</h3>
                   <ul>
                     {review.issues.map((issue, idx) => (
                       <li key={idx}>
-                        <strong>Line {issue.line}</strong> [{issue.type}]: {issue.description}
+                        <strong>Line {issue.line}</strong> [{issue.type}]:{" "}
+                        {issue.description}
                       </li>
                     ))}
                   </ul>
@@ -189,4 +194,3 @@ async function submitCode(code: string): Promise<ReviewResponse> {
   }
   return await res.json();
 }
-

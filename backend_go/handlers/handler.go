@@ -24,9 +24,6 @@ func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// payload := map[string]string{"code": code}
-	// payloadBytes, _ := json.Marshal(payload)
-
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", "http://127.0.0.1:8000/analyse/code", bytes.NewReader(body))
 	if err != nil {
