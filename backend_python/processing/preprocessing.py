@@ -47,6 +47,7 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
             file_path=path, 
             chunk_id=str(uuid4()),
             code=code,
+            globals= [],
             )
         ]
     tree = ast.parse(code)
@@ -75,7 +76,7 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
 
     # Fallback: whole file if no classes/functions
     if not chunks:
-        chunks.append(CodeContext(file_path, "0", code))
+        chunks.append(CodeContext(file_path=path, chunk_id="0", code=code, globals=[]))
 
     return chunks
 
