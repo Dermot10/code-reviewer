@@ -1,6 +1,7 @@
 import io 
 import csv
 import json
+from typing import Dict
 from backend_python.schema.context import ReviewResponse
 
 
@@ -17,7 +18,7 @@ def render_review_to_text(review: ReviewResponse) -> str:
     return "\n".join(lines)
 
 
-def render_review_to_json(review: ReviewResponse) -> str: 
+def render_review_to_json(review: ReviewResponse) -> Dict[str,str]: 
     json_obj = json.dumps(review.dict(), indent=2)
     return json_obj
 

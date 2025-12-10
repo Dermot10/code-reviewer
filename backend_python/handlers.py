@@ -42,6 +42,9 @@ async def enhance_code(payload: CodeRequest) -> Dict[str, Any]:
     print(chunked_context)
     print("")
     response = await Execute_enhance(chunked_context)
+    print("----- The response from the code quality -----")
+    print(response)
+    print("")
     return postprocess_enhanced(response)
 
 @review_router.post("/export-md")

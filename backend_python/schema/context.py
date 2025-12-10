@@ -22,7 +22,7 @@ class CodeContext(BaseModel):
     # dependencies: List[str] = []
     # embedding_vector: List[float] = []
 
-class ReviewContext(BaseModel): 
+class ResponseContext(BaseModel): 
     chunk_id: str
     syntax: str | None = None 
     semantics: str | None = None

@@ -10,7 +10,7 @@ def postprocess_review(final_review):
 
 def postprocess_enhanced(enhanced_code):
     return {
-        "enhanced_code": ""
+        "enhanced_code": enhanced_code
     }
 
 

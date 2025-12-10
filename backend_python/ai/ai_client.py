@@ -1,10 +1,8 @@
 import os
-import asyncio
+from typing import Type, Union
 from openai import OpenAI
 from dotenv import load_dotenv
-from typing import Dict
-from backend_python.schema.context import ReviewResponse
-from backend_python.schema.context import ReviewContext
+from backend_python.schema.context import ReviewResponse, BestPracticesResponse
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 
 
@@ -15,7 +13,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
 
-def openai_call(system_prompt ,input_prompt: str):
+def openai_call(system_prompt:str , input_prompt: str, output_format: Type[Union[ReviewResponse, BestPracticesResponse]]):
     """
     OpenAI API call
 
@@ -30,7 +28,7 @@ def openai_call(system_prompt ,input_prompt: str):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": input_prompt},
             ],
-            text_format=ReviewResponse
+            text_format=output_format
         )
 
         review = response.output_parsed

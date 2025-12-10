@@ -12,16 +12,48 @@ from backend_python.schema.context import CodeContext
 from backend_python.metrics import CHUNKING_FAILURES, FILE_EXTRACTION_ERRORS
 
 
-def extract_globals(tree: ast.AST, code_lines: list[str]) -> list[str]:
+def extract_globals(tree: ast.AST, code_lines: List[str]) -> List[str]:
     globals_found = []
+
     for node in tree.body:
+        
+        # Handle simple assignment: x = 10
+      
         if isinstance(node, ast.Assign):
-            # simple global assignment
-            targets = [t.id for t in node.targets if isinstance(t, ast.Name)]
-            for t in targets:
-                globals_found.append(f"{t} = {code_lines[node.lineno - 1].strip()}")
-        if isinstance(node, ast.FunctionDef) and node.name == "__all__":
-            globals_found.append("__all__ defined")
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    # Pull the actual source exactly as written in the file
+                    line = code_lines[node.lineno - 1].rstrip()
+                    globals_found.append(line)
+
+       
+        # Annotated assignment: x: int = 10
+      
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name):
+                line = code_lines[node.lineno - 1].rstrip()
+                globals_found.append(line)
+
+   
+        # The __all__ variable
+       
+        if (
+            isinstance(node, (ast.Assign, ast.AnnAssign))
+            and any(
+                isinstance(t, ast.Name) and t.id == "__all__"
+                for t in (node.targets if isinstance(node, ast.Assign) else [node.target])
+            )
+        ):
+            line = code_lines[node.lineno - 1].rstrip()
+            globals_found.append(line)
+
+       
+        # Imports count as global declarations
+       
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            line = code_lines[node.lineno - 1].rstrip()
+            globals_found.append(line)
+
     return globals_found
 
 
@@ -50,7 +82,6 @@ def extract_chunks(code: str, file_path: Optional[str]= None) -> List[CodeContex
             globals= [],
             )
         ]
-    tree = ast.parse(code)
     lines = code.splitlines() 
     globals_list = extract_globals(tree, lines)
 
