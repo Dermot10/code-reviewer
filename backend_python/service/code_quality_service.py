@@ -25,7 +25,7 @@ async def code_quality_service(chunked_context: List[CodeContext]) -> Dict[str, 
         handle_best_practices
     ]
 
-    enhanced_code = agent_service(chain, chunked_context, aggregate_python_output)
+    enhanced_code = await agent_service(chain, chunked_context, aggregate_python_output)
 
     return enhanced_code
 

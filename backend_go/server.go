@@ -1,13 +1,14 @@
 package main
 
 import (
-	"github.com/dermot10/code-reviewer/backend_go/handlers"
-
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/dermot10/code-reviewer/backend_go/handlers"
 )
 
 func setUpMux() *http.ServeMux {
@@ -15,8 +16,8 @@ func setUpMux() *http.ServeMux {
 	return mux
 }
 
-func registerRoutes(mux *http.ServeMux) {
-	CodeReviewHandler := handlers.NewCodeReviewHandler()
+func registerRoutes(mux *http.ServeMux, logger *slog.Logger) {
+	CodeReviewHandler := handlers.NewCodeReviewHandler(logger)
 	mux.HandleFunc("/review-code", CodeReviewHandler.ReviewCode)
 	mux.HandleFunc("/enhance-code", CodeReviewHandler.EnhanceCode)
 	mux.HandleFunc("/review-code/download", CodeReviewHandler.ExportReview)

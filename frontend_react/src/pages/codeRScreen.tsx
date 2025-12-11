@@ -1,6 +1,5 @@
 import CodeEditor from "../components/codeEditor";
-import {ReviewPanel, EnhancedCodePanel} from "../components/resultsPanel";
-import ErrorPanel from "../components/errorPanel";
+import {ReviewPanel} from "../components/resultsPanel";
 import { useState, useEffect } from "react";
 import "../index.css";
 
@@ -16,14 +15,15 @@ export default function MainScreen() {
   const [enhancedCode, setEnhancedCode] = useState<EnhancedResponse| null>(null);
   const [copied, setCopied] = useState(false);
   const [exportType, setExportType] = useState("md");
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     if (currentState === "results") {
       const panel = document.getElementById("results-panel");
       panel?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [currentState, review]);
+  }, [currentState, review]); // useEffect is called when dependency array changes in value 
+  
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -39,12 +39,13 @@ export default function MainScreen() {
       console.error("Submit failed:", err);
       setCurrentState("error");
     }
-  }
+  }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
 
   async function handleEnhanceSubmit() {
     try {
       setCurrentState("submitting");
       const data = await submitEnhancedCode(code);
+      console.log("enhanced:", data);
       setEnhancedCode(data);
       setCurrentState("results");
     } catch (err) {
@@ -151,55 +152,52 @@ export default function MainScreen() {
               <option value="txt">Text</option>
               <option value="json">JSON</option>
               <option value="csv">CSV</option>
-            </select>
-          </div>
-        </div>
-      </header>
-
-      <main className="main-container">
-        <div className="code-editor-panel">
-          <CodeEditor value={code} onChange={setCode} />
-        </div>
-
-        <div className="results-wrapper">
-          <div className="left-panel">
-            {currentState === "results" && review && (
-              <>
-                <ReviewPanel
-                  result={review.feedback}
-                  onCopy={handleCopy}
-                  copied={copied}
-                />
-                {review.issues.length > 0 && (
-                  <div className="issues-panel">
-                    <h3>Issues Found:</h3>
-                    <ul>
-                      {review.issues.map((issue, idx) => (
-                        <li key={idx}>
-                          <strong>Line {issue.line}</strong> [{issue.type}]:{" "}
-                          {issue.description}
-                        </li>
-                      ))}
-                    </ul>
+                    </select>
                   </div>
-                )}
-              </>
-            )}
-            {currentState === "error" && <ErrorPanel onRetry={handleReviewSubmit} />}
-            {currentState === "submitting" && <div className="spinner" />}
-          </div>
+                </div>
+              </header>
 
-          <div className="right-panel">
-            {currentState === "results" && enhancedCode && (
-              <EnhancedCodePanel
-                result={enhancedCode.output}
-                onCopy={handleCopy}
-                copied={copied}
+              <main className="main-container">
+            {/* Input Code Editor */}
+            <div className="editor-panel">
+              <h2>Input Code</h2>
+              <CodeEditor value={code} onChange={setCode} />
+            </div>
+
+            {/* Enhanced Code Editor */}
+            <div className="editor-panel">
+              <h2>Enhanced Code</h2>
+              <CodeEditor
+                value={enhancedCode?.output || ""}
+                onChange={() => {}}
+                readOnly={true}
               />
-            )}
-          </div>
-        </div>
-      </main>
+            </div>
+
+            {/* Review & Issues Panel */}
+            <div className="editor-panel review-panel-wrapper">
+              <h2>Review / Issues</h2>
+              {review ? (
+                <>
+                  <ReviewPanel result={review.feedback} onCopy={handleCopy} copied={copied} />
+                  {review.issues.length > 0 && (
+                    <div className="issues-panel">
+                      <h3>Issues Found:</h3>
+                      <ul>
+                        {review.issues.map((issue, idx) => (
+                          <li key={idx}>
+                            <strong>Line {issue.line}</strong> [{issue.type}]: {issue.description}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="placeholder">No review data yet</div>
+              )}
+            </div>
+        </main>
 
 
       <footer>

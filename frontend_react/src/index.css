@@ -100,74 +100,48 @@ a:hover {
   align-items: center;
 }
 
-/* ---------------------- Main Container ---------------------- */
 .main-container {
+  flex: 1;
   display: flex;
-  flex-direction: row; /* panels side by side */
+  flex-direction: row;
   gap: 1rem;
-  width: 95%;
-  max-width: 1400px;
-  height: 80vh; /* fixed viewport height */
+  width: 100%;
+  max-width: 2000px;
+  height: 70vh; /* fixed height for all panels */
+  margin: 0.5rem auto;
 }
 
-/* Left panel: code editor */
-.code-editor-panel {
-  flex: 2; /* bigger width for code editor */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 100%;
-  overflow-y: auto;
-}
-
-/* Right panels wrapper */
-.results-wrapper {
-  flex: 3;
-  display: flex;
-  flex-direction: column; /* stack middle and right panels */
-  gap: 1rem;
-  max-height: 100%;
-}
-
-/* Middle panel (Review + Issues) */
-.left-panel {
+.editor-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  max-height: 50%;
-  overflow-y: auto;
-}
-
-/* Right panel (Enhanced) */
-.right-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 50%;
-  overflow-y: auto;
-}
-
-/* Panels */
-.panel {
-  background: var(--panel-bg);
-  border-radius: 12px;
-  padding: 1rem;
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  padding: 0.5rem;
+  overflow: hidden;
 }
 
-/* Scrollable outputs */
-.results-panel, .issues-panel, .output {
+.editor-panel h2 {
+  margin: 0;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.editor-panel .monaco-editor {
+  flex: 1; /* take remaining height */
+}
+
+.review-panel, .issues-list {
+  flex: 1;
   overflow-y: auto;
-  max-height: 200px;
-  word-wrap: break-word;
+}
+
+.output {
   white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 0.5rem;
 }
 
 /* Buttons stay at top */

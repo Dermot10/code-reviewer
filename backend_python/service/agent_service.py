@@ -108,5 +108,5 @@ def aggregate_python_output(results: List[ResponseContext]) -> str:
     for r in results:
         bp = getattr(r, "best_practices", None)
         if bp and getattr(bp, "output", None):
-            chunks.appned(bp.output)
+            chunks.append(bp.output)
     return "\n\n".join(chunks)

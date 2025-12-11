@@ -5,37 +5,49 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 )
 
-type CodeReviewHandler struct{}
-
-func NewCodeReviewHandler() *CodeReviewHandler {
-	return &CodeReviewHandler{}
+type CodeReviewHandler struct {
+	logger *slog.Logger
 }
 
-func submitCode(w http.ResponseWriter, r *http.Request, url string) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "cannot read body", http.StatusBadRequest)
+type InputCode struct {
+	SubmittedCode string `json:"submitted_code"`
+}
+
+func NewCodeReviewHandler(logger *slog.Logger) *CodeReviewHandler {
+	return &CodeReviewHandler{
+		logger: logger,
+	}
+}
+
+func submitCode(w http.ResponseWriter, r *http.Request, url string, logger *slog.Logger) {
+	var input InputCode
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
+	logger.Info("received code submission")
 
-	code := string(body)
-	if code == "" {
+	if input.SubmittedCode == "" {
 		http.Error(w, "code cannot be empty", http.StatusBadRequest)
 		return
 	}
 
-	payload := map[string]string{"submitted_code": code}
+	payload := map[string]string{
+		"submitted_code": input.SubmittedCode,
+	}
 	b, _ := json.Marshal(payload)
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(b))
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
+	logger.Info("request forwarded to ai service")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -43,21 +55,23 @@ func submitCode(w http.ResponseWriter, r *http.Request, url string) {
 		return
 	}
 	defer resp.Body.Close()
+	logger.Info("response received from ai service")
 
 	respBody, _ := io.ReadAll(resp.Body)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resp.StatusCode)
-	w.Write(respBody)
+	_, _ = w.Write(respBody)
+
+	logger.Info("http response returned")
 }
 
 func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 	url := "http://127.0.0.1:8000/analyse/code"
-	submitCode(w, r, url)
+	submitCode(w, r, url, h.logger)
 }
 
 func (h *CodeReviewHandler) EnhanceCode(w http.ResponseWriter, r *http.Request) {
 	url := "http://127.0.0.1:8000/analyse/code-quality"
-	submitCode(w, r, url)
+	submitCode(w, r, url, h.logger)
 }
 
 func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request) {
