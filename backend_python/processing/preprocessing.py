@@ -8,7 +8,7 @@
 import ast
 from uuid import uuid4
 from typing import List, Optional
-from backend_python.schema.context import CodeContext
+from backend_python.schemas.ai.code_context import CodeContext
 from backend_python.metrics import CHUNKING_FAILURES, FILE_EXTRACTION_ERRORS
 
 

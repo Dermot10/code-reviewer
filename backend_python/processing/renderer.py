@@ -2,7 +2,7 @@ import io
 import csv
 import json
 from typing import Dict
-from backend_python.schema.context import ReviewResponse
+from backend_python.schemas.review.review_response import ReviewResponse
 
 
 def render_review_to_text(review: ReviewResponse) -> str:
