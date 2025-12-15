@@ -9,8 +9,9 @@ def postprocess_review(final_review):
     }
 
 def postprocess_enhanced(enhanced_code):
-    return {
+    enhanced_output = {
         "enhanced_code": enhanced_code
     }
-
+    print(f"this is the enhanced output sent to the front end - {enhanced_output}")
+    return enhanced_output
 

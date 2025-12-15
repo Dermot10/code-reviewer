@@ -1,12 +1,14 @@
+"use client";
+
 import CodeEditor from "../components/codeEditor";
 import {ReviewPanel} from "../components/resultsPanel";
 import { useState, useEffect } from "react";
-import "../index.css";
+
 
 const AppStates = ["idle", "submitting", "results", "error"] as const;
 type AppState = (typeof AppStates)[number];
 type ReviewResponse = { feedback: string; issues: any[] };
-type EnhancedResponse = {output: string};
+type EnhancedResponse = {enhanced_code: string};
 
 export default function MainScreen() {
   const [currentState, setCurrentState] = useState<AppState>("idle");
@@ -22,7 +24,7 @@ export default function MainScreen() {
       const panel = document.getElementById("results-panel");
       panel?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [currentState, review]); // useEffect is called when dependency array changes in value 
+  }, [currentState, review, enhancedCode]); // useEffect is called when dependency array changes in value 
   
 
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function MainScreen() {
       setCurrentState("submitting");
 
       const res = await fetch(
-        `http://localhost:8080/review-code/download?type=${type}`,
+        process.env.NEXT_PUBLIC_API_URL + `/review-code/download?type=${type}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -168,14 +170,14 @@ export default function MainScreen() {
             <div className="editor-panel">
               <h2>Enhanced Code</h2>
               <CodeEditor
-                value={enhancedCode?.output || ""}
+                value={enhancedCode?.enhanced_code || ""}
                 onChange={() => {}}
                 readOnly={true}
               />
             </div>
 
             {/* Review & Issues Panel */}
-            <div className="editor-panel review-panel-wrapper">
+            <div className="editor-panel review-panel-wrapper" id="results-panel">
               <h2>Review / Issues</h2>
               {review ? (
                 <>
@@ -219,7 +221,7 @@ export default function MainScreen() {
 }
 
 async function submitReviewCode(code: string): Promise<ReviewResponse> {
-  const res = await fetch("http://localhost:8080/review-code", {
+  const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/review-code", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ submitted_code: code }),
@@ -233,7 +235,7 @@ async function submitReviewCode(code: string): Promise<ReviewResponse> {
 
 
 async function submitEnhancedCode(code: string): Promise<EnhancedResponse> {
-  const res = await fetch("http://localhost:8080/enhance-code", {
+  const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/enhance-code", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ submitted_code: code }),

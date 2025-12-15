@@ -1,12 +1,17 @@
-import Editor from "@monaco-editor/react";
+"use client";
 
+
+import dynamic from "next/dynamic";
+
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+});
 
 type CodeEditorProps = {
   value: string;
   onChange?:(value: string) => void;
   readOnly?: boolean;
 }
-
 
 export default function CodeEditor({ value, onChange, readOnly = false}: CodeEditorProps) {
   return (
