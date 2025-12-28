@@ -32,6 +32,7 @@ func (h *AuthHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }
+
 func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 }
