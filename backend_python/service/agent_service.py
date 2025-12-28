@@ -2,8 +2,8 @@ from typing import List, Dict
 from fastapi import HTTPException
 from backend_python.logger import logger
 from backend_python.metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
-from backend_python.schema.context import CodeContext, ResponseContext
-
+from backend_python.schemas.ai.code_context import CodeContext
+from backend_python.schemas.ai.response_context import ResponseContext
 
 async def agent_service(chain: List, chunked_context: List[CodeContext], aggregate_func) -> Dict[str, str]:
     """
