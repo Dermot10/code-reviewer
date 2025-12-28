@@ -2,7 +2,10 @@ from typing import List, Type, Union
 
 from backend_python.ai.ai_client import openai_call
 from backend_python.ai.prompts import REVIEW_SYSTEM_PROMPT, BEST_PRACTICES_SYSTEM_PROMPT,SYNTAX_PROMPT, BEST_PRACTICES_PROMPT, SEMANTIC_PROMPT, SECURITY_PROMPT
-from backend_python.schema.context import CodeContext, ResponseContext, ReviewResponse, BestPracticesResponse
+from backend_python.schemas.ai.code_context import CodeContext 
+from backend_python.schemas.ai.response_context import ResponseContext 
+from backend_python.schemas.review.review_response import ReviewResponse
+from backend_python.schemas.review.best_practices import BestPracticesResponse
 from backend_python.metrics import SYNTAX_ERRORS, SEMANTICS_ERRORS, BEST_PRACTICES_ERRORS, SECURITY_ERRORS
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 

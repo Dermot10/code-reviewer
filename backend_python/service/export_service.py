@@ -3,7 +3,8 @@ from fastapi import HTTPException
 from fastapi.responses import FileResponse
 from backend_python.logger import logger
 from backend_python.exceptions.exceptions import FileProcessingError
-from backend_python.schema.context import ExportType, ReviewResponse
+from backend_python.schemas.common.enums import ExportType 
+from backend_python.schemas.review.review_response import ReviewResponse
 from backend_python.processing.fileprocessing import process_md, process_txt, process_csv, process_json
 from backend_python.processing.renderer import render_review_to_text, render_review_to_json ,render_review_to_csv
 

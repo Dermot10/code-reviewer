@@ -1,7 +1,9 @@
 from typing import Annotated, List, Dict, Any
 from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import FileResponse
-from backend_python.schema.context import CodeRequest, ExportType, ReviewResponse
+from backend_python.schemas.ai.code_request import CodeRequest
+from backend_python.schemas.review.review_response import ReviewResponse
+from backend_python.schemas.common.enums import ExportType
 from backend_python.processing.postprocessing import postprocess_review, postprocess_enhanced
 from backend_python.processing.preprocessing import extract_chunks
 from backend_python.service.export_service import Exceute_export
