@@ -7,19 +7,26 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+
+	cache "github.com/dermot10/code-reviewer/backend_go/Cache"
+	"gorm.io/gorm"
 )
 
 type CodeReviewHandler struct {
 	logger *slog.Logger
+	db     *gorm.DB
+	cache  *cache.RedisClient
 }
 
 type InputCode struct {
 	SubmittedCode string `json:"submitted_code"`
 }
 
-func NewCodeReviewHandler(logger *slog.Logger) *CodeReviewHandler {
+func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, cache *cache.RedisClient) *CodeReviewHandler {
 	return &CodeReviewHandler{
 		logger: logger,
+		db:     db,
+		cache:  cache,
 	}
 }
 

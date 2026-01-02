@@ -2,44 +2,52 @@ package models
 
 import "time"
 
-type User struct {
-	ID             int64     `db:"id" json:"id"`
-	Username       string    `db:"username" json:"username"`
-	Email          string    `db:"email" json:"email"`
-	Fullname       string    `db:"fullname" json:"fullname,omitempty"`
-	HashedPassword string    `db:"hashed_password" json:"-"`
-	IsActive       bool      `db:"is_active" json:"is_active"`
-	CreatedAt      time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
+// -------------------- USERS --------------------
 
-	// Relationships (optional, for eager loading)
-	Organisations []Organisation `db:"-" json:"organisations,omitempty"`
-	Projects      []Project      `db:"-" json:"projects,omitempty"`
+type User struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	Username       string    `gorm:"size:50;uniqueIndex;not null" json:"username"`
+	Email          string    `gorm:"size:100;uniqueIndex;not null" json:"email"`
+	Fullname       string    `gorm:"size:100" json:"fullname,omitempty"`
+	HashedPassword string    `gorm:"size:256;not null" json:"-"`
+	IsActive       bool      `gorm:"default:true" json:"is_active"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+
+	Organisations []Organisation `gorm:"foreignKey:OwnerID" json:"organisations,omitempty"`
+	Projects      []Project      `gorm:"foreignKey:OwnerID" json:"projects,omitempty"`
 }
+
+// -------------------- ORGANISATIONS --------------------
 
 type Organisation struct {
-	ID        int64     `db:"id" json:"id"`
-	Name      string    `db:"name" json:"name"`
-	OwnerID   int64     `db:"owner_id" json:"owner_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Name      string    `gorm:"size:100;uniqueIndex;not null" json:"name"`
+	OwnerID   uint      `gorm:"index;not null" json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 
-	Owner    *User     `db:"-" json:"owner,omitempty"`
-	Projects []Project `db:"-" json:"projects,omitempty"`
+	Owner    User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+	Projects []Project `gorm:"foreignKey:OrganisationID" json:"projects,omitempty"`
 }
+
+// -------------------- PROJECTS --------------------
 
 type Project struct {
-	ID             int64     `db:"id" json:"id"`
-	Name           string    `db:"name" json:"name"`
-	Description    string    `db:"description,omitempty" json:"description,omitempty"`
-	OwnerID        int64     `db:"owner_id" json:"owner_id"`
-	OrganisationID *int64    `db:"organisation_id,omitempty" json:"organisation_id,omitempty"`
-	CreatedAt      time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	Name           string    `gorm:"size:100;not null;index:idx_org_project,unique" json:"name"`
+	Description    string    `gorm:"type:text" json:"description,omitempty"`
+	OwnerID        uint      `gorm:"index;not null" json:"owner_id"`
+	OrganisationID *uint     `gorm:"index;index:idx_org_project,unique" json:"organisation_id,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 
-	Owner        *User         `db:"-" json:"owner,omitempty"`
-	Organisation *Organisation `db:"-" json:"organisation,omitempty"`
+	Owner        User          `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+	Organisation *Organisation `gorm:"foreignKey:OrganisationID" json:"organisation,omitempty"`
+	Reviews      []Review      `gorm:"constraint:OnDelete:CASCADE" json:"reviews,omitempty"`
 }
+
+// -------------------- REVIEWS --------------------
 
 type Review struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
@@ -50,10 +58,12 @@ type Review struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 
-	Project   Project    `gorm:"foreignKey:ProjectID"`
-	Reviewer  User       `gorm:"foreignKey:ReviewerID"`
-	AiResults []AiResult `gorm:"constraint:OnDelete:CASCADE"`
+	Project   Project    `gorm:"foreignKey:ProjectID" json:"project,omitempty"`
+	Reviewer  User       `gorm:"foreignKey:ReviewerID" json:"reviewer,omitempty"`
+	AiResults []AiResult `gorm:"constraint:OnDelete:CASCADE" json:"ai_results,omitempty"`
 }
+
+// -------------------- AI RESULTS --------------------
 
 type AiResult struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
@@ -62,5 +72,5 @@ type AiResult struct {
 	ModelVersion string    `gorm:"size:50" json:"model_version,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 
-	Review Review `gorm:"foreignKey:ReviewID"`
+	Review Review `gorm:"foreignKey:ReviewID" json:"review,omitempty"`
 }

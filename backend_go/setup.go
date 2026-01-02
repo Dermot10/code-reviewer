@@ -8,19 +8,48 @@ import (
 	"net/http"
 	"time"
 
+	cache "github.com/dermot10/code-reviewer/backend_go/Cache"
+	"github.com/dermot10/code-reviewer/backend_go/config"
+	"github.com/dermot10/code-reviewer/backend_go/database"
 	"github.com/dermot10/code-reviewer/backend_go/handlers"
+	"gorm.io/gorm"
 )
 
-func setUpMux() *http.ServeMux {
-	mux := http.NewServeMux()
-	return mux
+type Dependencies struct {
+	redis *cache.RedisClient
+	db    *gorm.DB
+	mux   *http.ServeMux
 }
 
-func registerRoutes(mux *http.ServeMux, logger *slog.Logger) {
-	CodeReviewHandler := handlers.NewCodeReviewHandler(logger)
+func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
+	// could add to set up layer and just evoke the wrapper
+	db, err := database.Connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := cache.NewCacheService(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	mux := http.NewServeMux()
+
+	return &Dependencies{
+		db:    db,
+		redis: c,
+		mux:   mux,
+	}, nil
+}
+
+func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient) {
+	CodeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
+	AuthReviewHandler := handlers.NewAuthHandler(logger, db, cache)
+
 	mux.HandleFunc("/review-code", CodeReviewHandler.ReviewCode)
 	mux.HandleFunc("/enhance-code", CodeReviewHandler.EnhanceCode)
 	mux.HandleFunc("/review-code/download", CodeReviewHandler.ExportReview)
+	mux.HandleFunc("/sign-up", AuthReviewHandler.CreateUser)
 
 }
 
@@ -39,7 +68,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func server(ctx context.Context, mux *http.ServeMux) error {
+func setUpServer(ctx context.Context, mux *http.ServeMux) error {
 	server := &http.Server{
 		Addr:              ":" + "8080",
 		Handler:           corsMiddleware(mux),
