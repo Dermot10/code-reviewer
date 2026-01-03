@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	cache "github.com/dermot10/code-reviewer/backend_go/Cache"
+	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"gorm.io/gorm"
 )
 

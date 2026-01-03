@@ -2,8 +2,6 @@ package models
 
 import "time"
 
-// -------------------- USERS --------------------
-
 type User struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
 	Username       string    `gorm:"size:50;uniqueIndex;not null" json:"username"`
@@ -18,8 +16,6 @@ type User struct {
 	Projects      []Project      `gorm:"foreignKey:OwnerID" json:"projects,omitempty"`
 }
 
-// -------------------- ORGANISATIONS --------------------
-
 type Organisation struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Name      string    `gorm:"size:100;uniqueIndex;not null" json:"name"`
@@ -30,8 +26,6 @@ type Organisation struct {
 	Owner    User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
 	Projects []Project `gorm:"foreignKey:OrganisationID" json:"projects,omitempty"`
 }
-
-// -------------------- PROJECTS --------------------
 
 type Project struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
@@ -47,8 +41,6 @@ type Project struct {
 	Reviews      []Review      `gorm:"constraint:OnDelete:CASCADE" json:"reviews,omitempty"`
 }
 
-// -------------------- REVIEWS --------------------
-
 type Review struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	ProjectID   uint      `gorm:"index;not null" json:"project_id"`
@@ -62,8 +54,6 @@ type Review struct {
 	Reviewer  User       `gorm:"foreignKey:ReviewerID" json:"reviewer,omitempty"`
 	AiResults []AiResult `gorm:"constraint:OnDelete:CASCADE" json:"ai_results,omitempty"`
 }
-
-// -------------------- AI RESULTS --------------------
 
 type AiResult struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	cache "github.com/dermot10/code-reviewer/backend_go/Cache"
+	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/dermot10/code-reviewer/backend_go/utils"

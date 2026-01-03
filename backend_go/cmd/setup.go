@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"time"
 
-	cache "github.com/dermot10/code-reviewer/backend_go/Cache"
+	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/config"
 	"github.com/dermot10/code-reviewer/backend_go/database"
 	"github.com/dermot10/code-reviewer/backend_go/handlers"
+	"github.com/dermot10/code-reviewer/backend_go/models"
 	"gorm.io/gorm"
 )
 
@@ -22,9 +23,12 @@ type Dependencies struct {
 }
 
 func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
-	// could add to set up layer and just evoke the wrapper
-	db, err := database.Connect(ctx)
+	db, err := database.Connect(ctx, cfg)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := setUpMigrations(db); err != nil {
 		return nil, err
 	}
 
@@ -42,14 +46,31 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 	}, nil
 }
 
-func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient) {
-	CodeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
-	AuthReviewHandler := handlers.NewAuthHandler(logger, db, cache)
+func setUpMigrations(db *gorm.DB) error {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Organisation{},
+		&models.Project{},
+		&models.Review{},
+		&models.AiResult{},
+	); err != nil {
+		return fmt.Errorf("db migrate: %w", err)
+	}
+	return nil
+}
 
-	mux.HandleFunc("/review-code", CodeReviewHandler.ReviewCode)
-	mux.HandleFunc("/enhance-code", CodeReviewHandler.EnhanceCode)
-	mux.HandleFunc("/review-code/download", CodeReviewHandler.ExportReview)
-	mux.HandleFunc("/sign-up", AuthReviewHandler.CreateUser)
+func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient) {
+	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
+	authReviewHandler := handlers.NewAuthHandler(logger, db, cache)
+	healthHandler := handlers.NewHealthHandler(logger, db, cache)
+	// metricsHandler := handlers.NewMetricsHandler(logger, db, cache)
+
+	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
+	// mux.HandleFunc("/metrics", metricsHandler.)
+	mux.HandleFunc("/review-code", codeReviewHandler.ReviewCode)
+	mux.HandleFunc("/enhance-code", codeReviewHandler.EnhanceCode)
+	mux.HandleFunc("/review-code/download", codeReviewHandler.ExportReview)
+	mux.HandleFunc("/sign-up", authReviewHandler.CreateUser)
 
 }
 

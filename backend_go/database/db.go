@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/dermot10/code-reviewer/backend_go/config"
@@ -13,8 +12,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func Connect(ctx context.Context) (*gorm.DB, error) {
-	dsn := os.Getenv("DATABASE_URL")
+func Connect(ctx context.Context, cfg *config.Config) (*gorm.DB, error) {
+	dsn := cfg.DatabaseURL
 	if dsn == "" {
 		return nil, fmt.Errorf("DATABASE_URL not set")
 	}
@@ -24,7 +23,7 @@ func Connect(ctx context.Context) (*gorm.DB, error) {
 
 	for i := 0; i < 5; i++ {
 		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Info),
+			Logger: logger.Default.LogMode(logger.Error),
 		})
 		if err == nil {
 			break
@@ -40,8 +39,8 @@ func Connect(ctx context.Context) (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sql DB: %w", err)
 	}
-	sqlDB.SetMaxOpenConns(config.GetEnvInt("DB_MAX_OPEN_CONNS", 25))
-	sqlDB.SetMaxIdleConns(config.GetEnvInt("DB_MAX_IDLE_CONNS", 10))
+	sqlDB.SetMaxOpenConns(cfg.DBMaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.DBMaxIdleConns)
 	sqlDB.SetConnMaxLifetime(time.Minute * 30)
 
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)

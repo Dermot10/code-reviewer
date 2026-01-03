@@ -22,3 +22,7 @@ func NewCacheService(cfg *config.Config) (*RedisClient, error) {
 	log.Print("Successfully connected to redis")
 	return &RedisClient{Rdb: rdb}, nil
 }
+
+func (r *RedisClient) Close() error {
+	return r.Rdb.Close()
+}
