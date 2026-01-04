@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
+	"github.com/dermot10/code-reviewer/backend_go/middleware"
 	"github.com/dermot10/code-reviewer/backend_go/services"
 )
 
@@ -48,11 +49,16 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	// take request
-	// check cache for user session
-	// if not send query to db
-	// db response
-	// cache user session
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	resp, err := h.authService.GetUser(int(userID))
+	if err != nil {
+		http.Error(w, "failed to get the user", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(resp)
 
 }
 
@@ -82,3 +88,5 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		"token": token,
 	})
 }
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {}

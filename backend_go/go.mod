@@ -5,7 +5,6 @@ go 1.24.1
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.17.2
 	golang.org/x/crypto v0.46.0

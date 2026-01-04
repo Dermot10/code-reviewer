@@ -63,7 +63,7 @@ func setUpMigrations(db *gorm.DB) error {
 
 func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient, jwtSecret string) {
 
-	authService := services.NewAuthService(db, cache)
+	authService := services.NewAuthService(db, cache, logger, jwtSecret)
 
 	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
 	authReviewHandler := handlers.NewAuthHandler(logger, authService)
@@ -73,9 +73,12 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache 
 	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
 	mux.HandleFunc("/api/auth/login", authReviewHandler.Login)
 
-	protected := http.NewServeMux()
-	protected.HandleFunc("GET /api/users/me", authReviewHandler.GetUser)
-	mux.Handle("/api/users/", middleware.AuthMiddleware(jwtSecret)(protected))
+	mux.Handle(
+		"/api/users/me",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(authReviewHandler.GetUser),
+		),
+	)
 
 	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
 	// mux.HandleFunc("/metrics", metricsHandler.)

@@ -26,3 +26,5 @@ func NewCacheService(cfg *config.Config) (*RedisClient, error) {
 func (r *RedisClient) Close() error {
 	return r.Rdb.Close()
 }
+
+// TODO - reduce redundant code in auth service but adding setJSON and getJSON to redis client

@@ -20,8 +20,9 @@ func main() {
 	}
 
 	cfg, err := config.LoadConfig()
+
 	if err != nil {
-		logger.Error("error loading config")
+		logger.Error("error loading config", "error", err)
 		os.Exit(1)
 	}
 

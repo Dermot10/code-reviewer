@@ -1,7 +1,11 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/dermot10/code-reviewer/backend_go/cache"
@@ -13,12 +17,14 @@ import (
 )
 
 type AuthService struct {
-	db    *gorm.DB
-	cache *cache.RedisClient
+	db        *gorm.DB
+	cache     *cache.RedisClient
+	logger    *slog.Logger
+	jwtSecret string
 }
 
-func NewAuthService(db *gorm.DB, cache *cache.RedisClient) *AuthService {
-	return &AuthService{db: db, cache: cache}
+func NewAuthService(db *gorm.DB, cache *cache.RedisClient, logger *slog.Logger, jwtSecret string) *AuthService {
+	return &AuthService{db: db, cache: cache, logger: logger, jwtSecret: jwtSecret}
 }
 
 func (s *AuthService) CreateUser(username, email, password string) (*dto.CreateUserResponse, error) {
@@ -50,6 +56,41 @@ func (s *AuthService) CreateUser(username, email, password string) (*dto.CreateU
 	return resp, nil
 }
 
+func (s *AuthService) GetUser(userID int) (*dto.UserResponse, error) {
+	ctx := context.Background()
+
+	cacheKey := fmt.Sprintf("user:%d:profile", userID)
+	cached, err := s.cache.Rdb.Get(ctx, cacheKey).Result()
+
+	// check cache, if miss, query db
+	if err == nil {
+		var user dto.UserResponse
+		if err := json.Unmarshal([]byte(cached), &user); err == nil {
+			s.logger.Info("user cached", "key", cacheKey)
+			return &user, nil
+		}
+	}
+
+	var user models.User
+	if err := s.db.Where("id = ?", userID).First(&user).Error; err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+
+	resp := &dto.UserResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+	}
+
+	// cache for next hr
+	if data, err := json.Marshal(resp); err == nil {
+		s.cache.Rdb.Set(ctx, cacheKey, data, time.Hour)
+	}
+
+	return resp, nil
+
+}
+
 func (s *AuthService) Login(email, password string) (string, error) {
 	var user models.User
 	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
@@ -68,10 +109,23 @@ func (s *AuthService) Login(email, password string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString([]byte(""))
+	tokenString, err := token.SignedString([]byte(s.jwtSecret))
 	if err != nil {
 		return "", err
 	}
 
 	return tokenString, nil
+}
+
+func (s *AuthService) Logout(email, password string) error {
+	var user models.User
+	if err := s.db.Where("email= ?", email).First(&user).Error; err != nil {
+		return errors.New("invalid credentials")
+	}
+
+	if !utils.CheckPassword(user.HashedPassword, password) {
+		return errors.New("invalid credentials")
+	}
+
+	return nil
 }
