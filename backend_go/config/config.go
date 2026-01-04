@@ -9,6 +9,7 @@ import (
 type Config struct {
 	RedisAddr      string `env:"REDIS_ADDR,required"`
 	DatabaseURL    string `env:"DATABASE_URL,required"`
+	JWTSecret      string `env:"JWT_SECRET, required"`
 	DBMaxOpenConns int    `env:"DB_MAX_OPEN_CONNS" envDefault:"25"`
 	DBMaxIdleConns int    `env:"DB_MAX_IDLE_CONNS" envDefault:"10"`
 }

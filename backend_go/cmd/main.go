@@ -45,7 +45,7 @@ func main() {
 		}
 	}()
 
-	registerRoutes(logger, deps.mux, deps.db, deps.redis)
+	registerRoutes(logger, deps.mux, deps.db, deps.redis, cfg.JWTSecret)
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {

@@ -5,11 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/dto"
-	"github.com/dermot10/code-reviewer/backend_go/models"
-	"github.com/dermot10/code-reviewer/backend_go/utils"
-	"gorm.io/gorm"
+	"github.com/dermot10/code-reviewer/backend_go/services"
 )
 
 // auth handlers for sign up, sign in
@@ -21,16 +18,14 @@ import (
 // gonna inject cache into handler like db
 
 type AuthHandler struct {
-	logger *slog.Logger
-	db     *gorm.DB
-	cache  *cache.RedisClient
+	logger      *slog.Logger
+	authService *services.AuthService
 }
 
-func NewAuthHandler(logger *slog.Logger, db *gorm.DB, cache *cache.RedisClient) *AuthHandler {
+func NewAuthHandler(logger *slog.Logger, authService *services.AuthService) *AuthHandler {
 	return &AuthHandler{
-		logger: logger,
-		db:     db,
-		cache:  cache,
+		logger:      logger,
+		authService: authService,
 	}
 }
 
@@ -42,32 +37,10 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Username == "" || req.Email == "" || req.Password == "" {
-		http.Error(w, "missing fields", http.StatusBadRequest)
-		return
-	}
-
-	hashedPwd, err := utils.HashedPassword(req.Password)
+	resp, err := h.authService.CreateUser(req.Username, req.Email, req.Password)
 	if err != nil {
-		http.Error(w, "server error", http.StatusInternalServerError)
+		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
-	}
-
-	user := models.User{
-		Username:       req.Username,
-		Email:          req.Email,
-		HashedPassword: hashedPwd,
-	}
-
-	if err := h.db.Create(&user).Error; err != nil {
-		http.Error(w, "could not create user", http.StatusConflict)
-		return
-	}
-
-	resp := dto.CreateUserResponse{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
 	}
 
 	w.WriteHeader(http.StatusCreated)
@@ -80,6 +53,7 @@ func (h *AuthHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// if not send query to db
 	// db response
 	// cache user session
+
 }
 
 func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
@@ -88,4 +62,23 @@ func (h *AuthHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *AuthHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var req dto.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	token, err := h.authService.Login(req.Email, req.Password)
+	if err != nil {
+		http.Error(w, "failed to login", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+	})
 }

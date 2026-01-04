@@ -12,7 +12,9 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/config"
 	"github.com/dermot10/code-reviewer/backend_go/database"
 	"github.com/dermot10/code-reviewer/backend_go/handlers"
+	"github.com/dermot10/code-reviewer/backend_go/middleware"
 	"github.com/dermot10/code-reviewer/backend_go/models"
+	"github.com/dermot10/code-reviewer/backend_go/services"
 	"gorm.io/gorm"
 )
 
@@ -59,18 +61,27 @@ func setUpMigrations(db *gorm.DB) error {
 	return nil
 }
 
-func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient) {
+func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient, jwtSecret string) {
+
+	authService := services.NewAuthService(db, cache)
+
 	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
-	authReviewHandler := handlers.NewAuthHandler(logger, db, cache)
+	authReviewHandler := handlers.NewAuthHandler(logger, authService)
 	healthHandler := handlers.NewHealthHandler(logger, db, cache)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, cache)
+
+	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
+	mux.HandleFunc("/api/auth/login", authReviewHandler.Login)
+
+	protected := http.NewServeMux()
+	protected.HandleFunc("GET /api/users/me", authReviewHandler.GetUser)
+	mux.Handle("/api/users/", middleware.AuthMiddleware(jwtSecret)(protected))
 
 	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
 	// mux.HandleFunc("/metrics", metricsHandler.)
 	mux.HandleFunc("/review-code", codeReviewHandler.ReviewCode)
 	mux.HandleFunc("/enhance-code", codeReviewHandler.EnhanceCode)
 	mux.HandleFunc("/review-code/download", codeReviewHandler.ExportReview)
-	mux.HandleFunc("/sign-up", authReviewHandler.CreateUser)
 
 }
 
