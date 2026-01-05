@@ -1,5 +1,5 @@
 package dto
 
 type ReviewRequest struct {
-	Code string `json:"code"`
+	Code string `json:"submitted_code"`
 }

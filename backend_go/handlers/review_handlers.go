@@ -9,17 +9,17 @@ import (
 	"net/http"
 
 	"github.com/dermot10/code-reviewer/backend_go/cache"
+	"github.com/dermot10/code-reviewer/backend_go/dto"
+	"github.com/dermot10/code-reviewer/backend_go/middleware"
+	"github.com/dermot10/code-reviewer/backend_go/services"
 	"gorm.io/gorm"
 )
 
 type CodeReviewHandler struct {
-	logger *slog.Logger
-	db     *gorm.DB
-	cache  *cache.RedisClient
-}
-
-type InputCode struct {
-	SubmittedCode string `json:"submitted_code"`
+	logger        *slog.Logger
+	db            *gorm.DB
+	cache         *cache.RedisClient
+	reviewService *services.ReviewService
 }
 
 func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, cache *cache.RedisClient) *CodeReviewHandler {
@@ -30,55 +30,63 @@ func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, cache *cache.RedisCl
 	}
 }
 
-func submitCode(w http.ResponseWriter, r *http.Request, url string, logger *slog.Logger) {
-	var input InputCode
+func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	var requestCode dto.ReviewRequest
+	if err := json.NewDecoder(r.Body).Decode(&requestCode); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	logger.Info("received code submission")
+	h.logger.Info("received code submission for review")
 
-	if input.SubmittedCode == "" {
+	if requestCode.Code == "" {
 		http.Error(w, "code cannot be empty", http.StatusBadRequest)
 		return
 	}
 
-	payload := map[string]string{
-		"submitted_code": input.SubmittedCode,
-	}
-	b, _ := json.Marshal(payload)
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(b))
+	review, err := h.reviewService.CreateReview(userID, requestCode.Code)
 	if err != nil {
-		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+		http.Error(w, "failed to create review", http.StatusInternalServerError)
 		return
 	}
-	logger.Info("request forwarded to ai service")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
-		return
-	}
-	defer resp.Body.Close()
-	logger.Info("response received from ai service")
-
-	respBody, _ := io.ReadAll(resp.Body)
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write(respBody)
-
-	logger.Info("http response returned")
-}
-
-func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
-	url := "http://127.0.0.1:8000/analyse/code"
-	submitCode(w, r, url, h.logger)
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"review_id": review.ID,
+		"status":    review.Status,
+		"message":   "Review queued for processing",
+	})
 }
 
 func (h *CodeReviewHandler) EnhanceCode(w http.ResponseWriter, r *http.Request) {
-	url := "http://127.0.0.1:8000/analyse/code-quality"
-	submitCode(w, r, url, h.logger)
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	var requestCode dto.ReviewRequest
+	if err := json.NewDecoder(r.Body).Decode(&requestCode); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+	h.logger.Info("received code submission for enhancement")
+
+	if requestCode.Code == "" {
+		http.Error(w, "code cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	enhancement, err := h.reviewService.CreateEnhancement(userID)
+	if err != nil {
+		http.Error(w, "failed to create enhancement", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"enhancement_id": enhancement.ID,
+		"status":         enhancement.Status,
+		"message":        "Code enhancements queued for processing",
+	})
+
 }
 
 func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request) {
