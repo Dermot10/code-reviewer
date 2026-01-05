@@ -51,10 +51,8 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 func setUpMigrations(db *gorm.DB) error {
 	if err := db.AutoMigrate(
 		&models.User{},
-		&models.Organisation{},
-		&models.Project{},
 		&models.Review{},
-		&models.AiResult{},
+		&models.Enhancement{},
 	); err != nil {
 		return fmt.Errorf("db migrate: %w", err)
 	}
@@ -72,7 +70,10 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache 
 
 	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
 	mux.HandleFunc("/api/auth/login", authReviewHandler.Login)
+	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
+	// mux.HandleFunc("/metrics", metricsHandler.)
 
+	// auth protected routes - may need to refactor, and include review handlers in too
 	mux.Handle(
 		"/api/users/me",
 		middleware.AuthMiddleware(jwtSecret)(
@@ -80,8 +81,13 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache 
 		),
 	)
 
-	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
-	// mux.HandleFunc("/metrics", metricsHandler.)
+	mux.Handle(
+		"/api/auth/logout",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(authReviewHandler.Logout),
+		),
+	)
+
 	mux.HandleFunc("/review-code", codeReviewHandler.ReviewCode)
 	mux.HandleFunc("/enhance-code", codeReviewHandler.EnhanceCode)
 	mux.HandleFunc("/review-code/download", codeReviewHandler.ExportReview)

@@ -89,4 +89,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {}
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	if err := h.authService.Logout(int(userID)); err != nil {
+		http.Error(w, "logout failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "logged out"})
+
+}

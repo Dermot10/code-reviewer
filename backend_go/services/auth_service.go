@@ -117,15 +117,15 @@ func (s *AuthService) Login(email, password string) (string, error) {
 	return tokenString, nil
 }
 
-func (s *AuthService) Logout(email, password string) error {
-	var user models.User
-	if err := s.db.Where("email= ?", email).First(&user).Error; err != nil {
-		return errors.New("invalid credentials")
-	}
+func (s *AuthService) Logout(userID int) error {
+	ctx := context.Background()
 
-	if !utils.CheckPassword(user.HashedPassword, password) {
-		return errors.New("invalid credentials")
-	}
+	// del from redis
+	profileKey := fmt.Sprintf("user:%d:profile", userID)
+	s.cache.Rdb.Del(ctx, profileKey)
+
+	sessionKey := fmt.Sprintf("session:%d", userID)
+	s.cache.Rdb.Del(ctx, sessionKey)
 
 	return nil
 }

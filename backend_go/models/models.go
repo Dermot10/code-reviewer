@@ -11,56 +11,52 @@ type User struct {
 	IsActive       bool      `gorm:"default:true" json:"is_active"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
-
-	Organisations []Organisation `gorm:"foreignKey:OwnerID" json:"organisations,omitempty"`
-	Projects      []Project      `gorm:"foreignKey:OwnerID" json:"projects,omitempty"`
 }
 
-type Organisation struct {
+// type Organisation struct {
+// 	ID        uint      `gorm:"primaryKey" json:"id"`
+// 	Name      string    `gorm:"size:100;uniqueIndex;not null" json:"name"`
+// 	OwnerID   uint      `gorm:"index;not null" json:"owner_id"`
+// 	CreatedAt time.Time `json:"created_at"`
+// 	UpdatedAt time.Time `json:"updated_at"`
+
+// 	Owner    User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+// 	Projects []Project `gorm:"foreignKey:OrganisationID" json:"projects,omitempty"`
+// }
+
+// type Project struct {
+// 	ID             uint      `gorm:"primaryKey" json:"id"`
+// 	Name           string    `gorm:"size:100;not null;index:idx_org_project,unique" json:"name"`
+// 	Description    string    `gorm:"type:text" json:"description,omitempty"`
+// 	OwnerID        uint      `gorm:"index;not null" json:"owner_id"`
+// 	OrganisationID *uint     `gorm:"index;index:idx_org_project,unique" json:"organisation_id,omitempty"`
+// 	CreatedAt      time.Time `json:"created_at"`
+// 	UpdatedAt      time.Time `json:"updated_at"`
+
+// 	Owner        User          `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
+// 	Organisation *Organisation `gorm:"foreignKey:OrganisationID" json:"organisation,omitempty"`
+// 	Reviews      []Review      `gorm:"constraint:OnDelete:CASCADE" json:"reviews,omitempty"`
+// }
+
+type Review struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	Name      string    `gorm:"size:100;uniqueIndex;not null" json:"name"`
-	OwnerID   uint      `gorm:"index;not null" json:"owner_id"`
+	UserID    uint      `gorm:"index;not null" json:"user_id"`
+	Code      string    `gorm:"type:text;not null" json:"code"`
+	Status    string    `gorm:"type:varchar(20);default:'pending'" json:"status"`
+	Result    string    `gorm:"type:text;not null" json:"result,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	Owner    User      `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	Projects []Project `gorm:"foreignKey:OrganisationID" json:"projects,omitempty"`
+	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
-type Project struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	Name           string    `gorm:"size:100;not null;index:idx_org_project,unique" json:"name"`
-	Description    string    `gorm:"type:text" json:"description,omitempty"`
-	OwnerID        uint      `gorm:"index;not null" json:"owner_id"`
-	OrganisationID *uint     `gorm:"index;index:idx_org_project,unique" json:"organisation_id,omitempty"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-
-	Owner        User          `gorm:"foreignKey:OwnerID" json:"owner,omitempty"`
-	Organisation *Organisation `gorm:"foreignKey:OrganisationID" json:"organisation,omitempty"`
-	Reviews      []Review      `gorm:"constraint:OnDelete:CASCADE" json:"reviews,omitempty"`
-}
-
-type Review struct {
-	ID          uint      `gorm:"primaryKey" json:"id"`
-	ProjectID   uint      `gorm:"index;not null" json:"project_id"`
-	ReviewerID  uint      `gorm:"index;not null" json:"reviewer_id"`
-	Feedback    string    `gorm:"type:text;not null" json:"feedback"`
-	IssuesCount int       `gorm:"default:0" json:"issues_count"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-
-	Project   Project    `gorm:"foreignKey:ProjectID" json:"project,omitempty"`
-	Reviewer  User       `gorm:"foreignKey:ReviewerID" json:"reviewer,omitempty"`
-	AiResults []AiResult `gorm:"constraint:OnDelete:CASCADE" json:"ai_results,omitempty"`
-}
-
-type AiResult struct {
+type Enhancement struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
-	ReviewID     uint      `gorm:"index;not null" json:"review_id"`
-	Output       string    `gorm:"type:text;not null" json:"output"`
+	UserID       uint      `gorm:"index;not null" json:"user_id"`
+	Original     string    `gorm:"type:text;not null" json:"original"`
+	Enhanced     string    `gorm:"type:text;not null" json:"enhanced"`
+	Status       string    `gorm:"type:varchar(20);default:'pending'" json:"status"`
 	ModelVersion string    `gorm:"size:50" json:"model_version,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
-
-	Review Review `gorm:"foreignKey:ReviewID" json:"review,omitempty"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
