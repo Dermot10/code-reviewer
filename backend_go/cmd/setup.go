@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/config"
 	"github.com/dermot10/code-reviewer/backend_go/database"
 	"github.com/dermot10/code-reviewer/backend_go/handlers"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
 	"github.com/dermot10/code-reviewer/backend_go/models"
+	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/services"
 	"gorm.io/gorm"
 )
 
 type Dependencies struct {
-	redis *cache.RedisClient
+	redis *redis.RedisClient
 	db    *gorm.DB
 	mux   *http.ServeMux
 }
@@ -34,7 +34,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		return nil, err
 	}
 
-	c, err := cache.NewCacheService(cfg)
+	c, err := redis.NewRedisService(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -59,14 +59,14 @@ func setUpMigrations(db *gorm.DB) error {
 	return nil
 }
 
-func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, cache *cache.RedisClient, jwtSecret string) {
+func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis *redis.RedisClient, jwtSecret string) {
 
-	authService := services.NewAuthService(db, cache, logger, jwtSecret)
+	authService := services.NewAuthService(db, redis, logger, jwtSecret)
 
-	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, cache)
+	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, redis)
 	authReviewHandler := handlers.NewAuthHandler(logger, authService)
-	healthHandler := handlers.NewHealthHandler(logger, db, cache)
-	// metricsHandler := handlers.NewMetricsHandler(logger, db, cache)
+	healthHandler := handlers.NewHealthHandler(logger, db, redis)
+	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
 	mux.HandleFunc("/api/auth/login", authReviewHandler.Login)

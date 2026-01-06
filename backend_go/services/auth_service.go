@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/models"
+	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/utils"
 	"github.com/golang-jwt/jwt"
 	"gorm.io/gorm"
@@ -18,13 +18,13 @@ import (
 
 type AuthService struct {
 	db        *gorm.DB
-	cache     *cache.RedisClient
+	redis     *redis.RedisClient
 	logger    *slog.Logger
 	jwtSecret string
 }
 
-func NewAuthService(db *gorm.DB, cache *cache.RedisClient, logger *slog.Logger, jwtSecret string) *AuthService {
-	return &AuthService{db: db, cache: cache, logger: logger, jwtSecret: jwtSecret}
+func NewAuthService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger, jwtSecret string) *AuthService {
+	return &AuthService{db: db, redis: redis, logger: logger, jwtSecret: jwtSecret}
 }
 
 func (s *AuthService) CreateUser(username, email, password string) (*dto.CreateUserResponse, error) {
@@ -60,7 +60,7 @@ func (s *AuthService) GetUser(userID int) (*dto.UserResponse, error) {
 	ctx := context.Background()
 
 	cacheKey := fmt.Sprintf("user:%d:profile", userID)
-	cached, err := s.cache.Rdb.Get(ctx, cacheKey).Result()
+	cached, err := s.redis.GetCache(ctx, cacheKey)
 
 	// check cache, if miss, query db
 	if err == nil {
@@ -84,7 +84,10 @@ func (s *AuthService) GetUser(userID int) (*dto.UserResponse, error) {
 
 	// cache for next hr
 	if data, err := json.Marshal(resp); err == nil {
-		s.cache.Rdb.Set(ctx, cacheKey, data, time.Hour)
+		err = s.redis.SetCache(ctx, cacheKey, data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set cache: %w", err)
+		}
 	}
 
 	return resp, nil
@@ -122,10 +125,10 @@ func (s *AuthService) Logout(userID int) error {
 
 	// del from redis
 	profileKey := fmt.Sprintf("user:%d:profile", userID)
-	s.cache.Rdb.Del(ctx, profileKey)
+	s.redis.DelKey(ctx, profileKey)
 
 	sessionKey := fmt.Sprintf("session:%d", userID)
-	s.cache.Rdb.Del(ctx, sessionKey)
+	s.redis.DelKey(ctx, sessionKey)
 
 	return nil
 }

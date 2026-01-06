@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/dermot10/code-reviewer/backend_go/cache"
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
+	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/services"
 	"gorm.io/gorm"
 )
@@ -18,20 +18,24 @@ import (
 type CodeReviewHandler struct {
 	logger        *slog.Logger
 	db            *gorm.DB
-	cache         *cache.RedisClient
+	redis         *redis.RedisClient
 	reviewService *services.ReviewService
 }
 
-func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, cache *cache.RedisClient) *CodeReviewHandler {
+func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, redis *redis.RedisClient) *CodeReviewHandler {
 	return &CodeReviewHandler{
 		logger: logger,
 		db:     db,
-		cache:  cache,
+		redis:  redis,
 	}
 }
 
 func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "unathorized", http.StatusUnauthorized)
+		return
+	}
 
 	var requestCode dto.ReviewRequest
 	if err := json.NewDecoder(r.Body).Decode(&requestCode); err != nil {
@@ -60,7 +64,11 @@ func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CodeReviewHandler) EnhanceCode(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "unathorized", http.StatusUnauthorized)
+		return
+	}
 
 	var requestCode dto.ReviewRequest
 	if err := json.NewDecoder(r.Body).Decode(&requestCode); err != nil {
