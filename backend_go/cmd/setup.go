@@ -62,8 +62,9 @@ func setUpMigrations(db *gorm.DB) error {
 func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis *redis.RedisClient, jwtSecret string) {
 
 	authService := services.NewAuthService(db, redis, logger, jwtSecret)
+	reviewService := services.NewReviewService(db, redis, logger)
 
-	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, redis)
+	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, redis, reviewService)
 	authReviewHandler := handlers.NewAuthHandler(logger, authService)
 	healthHandler := handlers.NewHealthHandler(logger, db, redis)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
@@ -88,9 +89,26 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis 
 		),
 	)
 
-	mux.HandleFunc("/review-code", codeReviewHandler.ReviewCode)
-	mux.HandleFunc("/enhance-code", codeReviewHandler.EnhanceCode)
-	mux.HandleFunc("/review-code/download", codeReviewHandler.ExportReview)
+	mux.Handle(
+		"/review-code",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(codeReviewHandler.ReviewCode),
+		),
+	)
+
+	mux.Handle(
+		"/enhance-code",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(codeReviewHandler.EnhanceCode),
+		),
+	)
+
+	mux.Handle(
+		"/review-code/download",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(codeReviewHandler.ExportReview),
+		),
+	)
 
 }
 

@@ -1,59 +1,59 @@
-from typing import List, Dict, Any
-from fastapi import HTTPException
-from fastapi.responses import FileResponse
-from backend_python.logger import logger
-from backend_python.exceptions.exceptions import FileProcessingError
-from backend_python.schemas.common.enums import ExportType 
-from backend_python.schemas.review.review_response import ReviewResponse
-from backend_python.processing.fileprocessing import process_md, process_txt, process_csv, process_json
-from backend_python.processing.renderer import render_review_to_text, render_review_to_json ,render_review_to_csv
+# from typing import List, Dict, Any
+# from fastapi import HTTPException
+# from fastapi.responses import FileResponse
+# from backend_python.logger import logger
+# from backend_python.exceptions.exceptions import FileProcessingError
+# from backend_python.schemas.common.enums import ExportType 
+# from backend_python.schemas.review.review_response import ReviewResponse
+# from backend_python.processing.fileprocessing import process_md, process_txt, process_csv, process_json
+# from backend_python.processing.renderer import render_review_to_text, render_review_to_json ,render_review_to_csv
 
 
-def Exceute_export(export_type: str, review: ReviewResponse) -> FileResponse:
-    try: 
-        response_file = export_file_service(export_type, review)
-        return response_file
-    except Exception as e: 
-        logger.warning(f"failed to execute export file service - {e}")
-        raise 
+# def Exceute_export(export_type: str, review: ReviewResponse) -> FileResponse:
+#     try: 
+#         response_file = export_file_service(export_type, review)
+#         return response_file
+#     except Exception as e: 
+#         logger.warning(f"failed to execute export file service - {e}")
+#         raise 
 
 
-def export_file_service(export_type: str, review: ReviewResponse) -> FileResponse: 
-    try: 
-        if export_type == ExportType.MD.value:
-            final_review = render_review_to_text(review)
-            file_response = process_md(export_type, final_review)
-            print("exporting as .md file")
-            return file_response
+# def export_file_service(export_type: str, review: ReviewResponse) -> FileResponse: 
+#     try: 
+#         if export_type == ExportType.MD.value:
+#             final_review = render_review_to_text(review)
+#             file_response = process_md(export_type, final_review)
+#             print("exporting as .md file")
+#             return file_response
 
-        elif export_type == ExportType.TXT.value:
-            final_review = render_review_to_text(review)
-            file_response = process_txt(export_type, final_review)
-            print("exporting as .txt file")
-            return file_response
+#         elif export_type == ExportType.TXT.value:
+#             final_review = render_review_to_text(review)
+#             file_response = process_txt(export_type, final_review)
+#             print("exporting as .txt file")
+#             return file_response
 
-        elif export_type == ExportType.CSV.value:
-            final_review = render_review_to_csv(review)
-            file_response = process_csv(export_type, final_review)
-            print("exporting as .csv file")
-            return file_response
+#         elif export_type == ExportType.CSV.value:
+#             final_review = render_review_to_csv(review)
+#             file_response = process_csv(export_type, final_review)
+#             print("exporting as .csv file")
+#             return file_response
 
-        elif export_type == ExportType.JSON.value:
-            final_review = render_review_to_json(review)
-            file_response = process_json(export_type, final_review)
-            print("exporting as .json file")
-            return file_response
+#         elif export_type == ExportType.JSON.value:
+#             final_review = render_review_to_json(review)
+#             file_response = process_json(export_type, final_review)
+#             print("exporting as .json file")
+#             return file_response
         
-        ## This extension will be used for best_practices ai service to package .py files
+#         ## This extension will be used for best_practices ai service to package .py files
         
-        # elif export_type == ExportType.PY:
-        #     file_response = process_py(export_type, review)
-        #     print("Exporting as .py file")
-        #     return file_response
-        else: 
-            print(f"unknown export type - {export_type}")
-            return
+#         # elif export_type == ExportType.PY:
+#         #     file_response = process_py(export_type, review)
+#         #     print("Exporting as .py file")
+#         #     return file_response
+#         else: 
+#             print(f"unknown export type - {export_type}")
+#             return
 
-    except FileProcessingError as e: 
-        logger.warning(f"failed to export file - {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+#     except FileProcessingError as e: 
+#         logger.warning(f"failed to export file - {e}")
+#         raise HTTPException(status_code=500, detail="Internal server error")

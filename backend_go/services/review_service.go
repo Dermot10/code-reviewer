@@ -38,6 +38,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 	}
 
 	task := &dto.ReviewTask{
+		Type:     "review",
 		UserID:   userID,
 		ReviewID: review.ID,
 		Action:   "generate_summary",
@@ -69,6 +70,7 @@ func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, err
 	}
 
 	task := &dto.EnhanceTask{
+		Type:          "enhance",
 		UserID:        userID,
 		EnhancementID: enhancement.ID,
 		Action:        "generate_enhancement",

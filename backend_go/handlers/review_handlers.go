@@ -22,11 +22,12 @@ type CodeReviewHandler struct {
 	reviewService *services.ReviewService
 }
 
-func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, redis *redis.RedisClient) *CodeReviewHandler {
+func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, redis *redis.RedisClient, reviewService *services.ReviewService) *CodeReviewHandler {
 	return &CodeReviewHandler{
-		logger: logger,
-		db:     db,
-		redis:  redis,
+		logger:        logger,
+		db:            db,
+		redis:         redis,
+		reviewService: reviewService,
 	}
 }
 
