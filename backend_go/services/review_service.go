@@ -16,8 +16,6 @@ type ReviewService struct {
 	db     *gorm.DB
 	redis  *redis.RedisClient
 	logger *slog.Logger
-
-	// queue - *rabbitmq client
 }
 
 func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger) *ReviewService {
@@ -41,6 +39,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 		Type:     "review",
 		UserID:   userID,
 		ReviewID: review.ID,
+		Code:     review.Code,
 		Action:   "generate_summary",
 	}
 
