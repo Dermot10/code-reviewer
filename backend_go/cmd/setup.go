@@ -70,9 +70,14 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis 
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
-	mux.HandleFunc("/api/auth/login", authReviewHandler.Login)
 	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
 	// mux.HandleFunc("/metrics", metricsHandler.)
+	mux.Handle(
+		"/api/auth/login",
+		middleware.RateLimitAuth(redis)(
+			http.HandlerFunc(authReviewHandler.Login),
+		),
+	)
 
 	// auth protected routes - may need to refactor, and include review handlers in too
 	mux.Handle(
@@ -92,8 +97,9 @@ func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis 
 	mux.Handle(
 		"/review-code",
 		middleware.AuthMiddleware(jwtSecret)(
-			http.HandlerFunc(codeReviewHandler.ReviewCode),
-		),
+			middleware.RateLimiterReviews(redis)(
+				http.HandlerFunc(codeReviewHandler.ReviewCode),
+			)),
 	)
 
 	mux.Handle(
