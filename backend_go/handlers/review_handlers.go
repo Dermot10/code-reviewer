@@ -10,6 +10,7 @@ import (
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
+	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/services"
 	"gorm.io/gorm"
@@ -124,4 +125,21 @@ func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header().Set("Content-Disposition", resp.Header.Get("Content-Disposition"))
 	io.Copy(w, resp.Body)
+}
+
+func (h *CodeReviewHandler) GetReview(w http.ResponseWriter, r *http.Request) {
+	reviewID := r.PathValue("id")
+
+	var review models.Review
+
+	userID := r.Context().Value(middleware.UserIDKey).(uint)
+
+	if err := h.db.
+		Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
+		http.Error(w, "review not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(review)
 }

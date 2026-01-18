@@ -46,11 +46,16 @@ func main() {
 		}
 	}()
 
-	registerRoutes(logger, deps.mux, deps.db, deps.redis, cfg.JWTSecret)
+	registerRoutes(logger, deps, cfg.JWTSecret)
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		return setUpServer(ctx, deps.mux)
+	})
+
+	g.Go(func() error {
+		deps.reviewService.ListenForCompletions(ctx)
+		return nil
 	})
 
 	if err := g.Wait(); err != nil {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/dermot10/code-reviewer/backend_go/config"
@@ -19,9 +20,11 @@ import (
 )
 
 type Dependencies struct {
-	redis *redis.RedisClient
-	db    *gorm.DB
-	mux   *http.ServeMux
+	redis         *redis.RedisClient
+	db            *gorm.DB
+	mux           *http.ServeMux
+	authService   *services.AuthService
+	reviewService *services.ReviewService
 }
 
 func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
@@ -34,17 +37,23 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		return nil, err
 	}
 
-	c, err := redis.NewRedisService(cfg)
+	r, err := redis.NewRedisService(cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	mux := http.NewServeMux()
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
+	reviewService := services.NewReviewService(db, r, logger)
+
 	return &Dependencies{
-		db:    db,
-		redis: c,
-		mux:   mux,
+		db:            db,
+		redis:         r,
+		mux:           mux,
+		authService:   authService,
+		reviewService: reviewService,
 	}, nil
 }
 
@@ -59,70 +68,73 @@ func setUpMigrations(db *gorm.DB) error {
 	return nil
 }
 
-func registerRoutes(logger *slog.Logger, mux *http.ServeMux, db *gorm.DB, redis *redis.RedisClient, jwtSecret string) {
+func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 
-	authService := services.NewAuthService(db, redis, logger, jwtSecret)
-	reviewService := services.NewReviewService(db, redis, logger)
-
-	codeReviewHandler := handlers.NewCodeReviewHandler(logger, db, redis, reviewService)
-	authReviewHandler := handlers.NewAuthHandler(logger, authService)
-	healthHandler := handlers.NewHealthHandler(logger, db, redis)
+	codeReviewHandler := handlers.NewCodeReviewHandler(logger, deps.db, deps.redis, deps.reviewService)
+	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
+	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
-	mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
-	mux.HandleFunc("/healthz", healthHandler.HealthCheck)
+	deps.mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
+	deps.mux.HandleFunc("/healthz", healthHandler.HealthCheck)
 	// mux.HandleFunc("/metrics", metricsHandler.)
-	mux.Handle(
+	deps.mux.Handle(
 		"/api/auth/login",
-		middleware.RateLimitAuth(redis)(
+		middleware.RateLimitAuth(deps.redis)(
 			http.HandlerFunc(authReviewHandler.Login),
 		),
 	)
 
 	// auth protected routes - may need to refactor, and include review handlers in too
-	mux.Handle(
+	deps.mux.Handle(
 		"/api/users/me",
 		middleware.AuthMiddleware(jwtSecret)(
 			http.HandlerFunc(authReviewHandler.GetUser),
 		),
 	)
 
-	mux.Handle(
+	deps.mux.Handle(
 		"/api/auth/logout",
 		middleware.AuthMiddleware(jwtSecret)(
 			http.HandlerFunc(authReviewHandler.Logout),
 		),
 	)
 
-	mux.Handle(
+	deps.mux.Handle(
 		"/review-code",
 		middleware.AuthMiddleware(jwtSecret)(
-			middleware.RateLimiterReviews(redis)(
+			middleware.RateLimiterReviews(deps.redis)(
 				http.HandlerFunc(codeReviewHandler.ReviewCode),
 			)),
 	)
 
-	mux.Handle(
+	deps.mux.Handle(
 		"/enhance-code",
 		middleware.AuthMiddleware(jwtSecret)(
 			http.HandlerFunc(codeReviewHandler.EnhanceCode),
 		),
 	)
 
-	mux.Handle(
+	deps.mux.Handle(
 		"/review-code/download",
 		middleware.AuthMiddleware(jwtSecret)(
 			http.HandlerFunc(codeReviewHandler.ExportReview),
 		),
 	)
 
+	deps.mux.Handle(
+		"/api/reviews/{id}",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(codeReviewHandler.GetReview),
+		),
+	)
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusOK)

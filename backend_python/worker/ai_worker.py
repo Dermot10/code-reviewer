@@ -67,14 +67,29 @@ async def main():
         _, data = r.brpop(QUEUE_KEY)
         task_dict = json.loads(data)
         try:
-            task = task_adapter.validate_python(task_dict)
+            task = task_adapter.validate_python(task_dict)\
+            
+            lock_key = f"review:{task.review_id}:lock"
+            if not r.set(lock_key, "1", nx=True, ex=600): 
+                print(f"Review {task.review_id} already processed or in progress")
+                continue
+        
+            result = await process_task(task)
+
+            if task.type == "review":
+                r.set(f"review:{task.review_id}:result", json.dumps(result))
+                r.publish("review.completed", json.dumps({"review_id": task.review_id}))
+                print(f"✓ Review {task.review_id} completed")
+                
+            elif task.type == "enhance":
+                r.set(f"enhancement:{task.enhancement_id}:result", json.dumps(result))
+                r.publish("enhancement.completed", json.dumps({"enhancement_id": task.enhancement_id}))
+                print(f"✓ Enhancement {task.enhancement_id} completed")
+
+
         except Exception as e:
             print(f"failed to parse task: {e}")
             continue
-        
-        await process_task(task)
-
-
 
 if __name__=="__main__": 
     asyncio.run(main())
