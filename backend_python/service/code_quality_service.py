@@ -3,11 +3,12 @@
 # Returns: rewritten/improved code snippet.
 
 from typing import List, Dict
-from backend_python.logger import logger
+from backend_python.logger import get_logger
 from backend_python.schemas.ai.code_context import CodeContext
 from backend_python.ai.ai_agents import handle_best_practices
 from backend_python.service.agent_service import agent_service, aggregate_python_output
 
+logger = get_logger(__name__)
 
 async def Execute_enhance(chunked_code: List[CodeContext]) -> Dict[str, str]: 
     try: 

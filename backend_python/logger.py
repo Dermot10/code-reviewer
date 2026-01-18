@@ -1,7 +1,19 @@
 import logging
+import sys
 
-logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
-logger = logging.getLogger(__name__)
+
+def get_logger(name: str = __name__) -> logging.Logger: 
+    """
+    Generic strutured logger
+    """
+    logger = logging.getLogger(name)
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            
+            "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+    return logger 
