@@ -1,62 +1,81 @@
 // app/(protected)/editor/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { Editor } from "@monaco-editor/react";
+import { useState } from "react";
+import TopBar from "./components/topbar";
+import Sidebar from "./components/sidebar";
+import EditorContainer from "./components/editorContainer";
+import ReviewPanel from "./components/reviewPanel";
+import Resizer from "./components/resizer";
+import { EditorFile, ReviewStatus } from "./types";
 
 export default function EditorPage() {
-  const [code, setCode] = useState("");
-  const [reviewId, setReviewId] = useState<number | null>(null);
-  const [reviewStatus, setReviewStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
-  const [reviewResult, setReviewResult] = useState<any>(null);
 
-  // Submit code for review
-  async function handleReview() {
+  const [theme, setTheme] = useState<"vs-dark" | "light">("vs-dark");
+
+  const [files, setFiles] = useState<EditorFile[]>([
+    { id: "1", name: "main.py", content: "# Write your Python code here\nprint('Hello, world')" },
+    { id: "2", name: "utils.py", content: "def helper():\n    pass" },
+  ]);
+  const [activeFileId, setActiveFileId] = useState("1");
+  const activeFile = files.find(f => f.id === activeFileId);
+
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("idle");
+  const [reviewResult, setReviewResult] = useState<any>(null);
+  const [reviewId, setReviewId] = useState<number | null>(null);
+
+  const [isReviewCollapsed, setIsReviewCollapsed] = useState(false);
+  const [panelHeight, setPanelHeight] = useState(200);
+
+  
+  const handleNewFile = () => {
+    const id = crypto.randomUUID();
+    const name = `file${files.length + 1}.py`;
+    setFiles(prev => [...prev, { id, name, content: "" }]);
+    setActiveFileId(id);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
+  const handleReview = async () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     try {
       setReviewStatus("processing");
-      console.log("Submitting code:", code, "to URL:", `${process.env.NEXT_PUBLIC_API_URL}/review-code`);
-
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/review-code`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({ code }),
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: activeFile?.content }),
       });
 
       if (res.status === 429) {
-        alert("Rate limit exceeded. Please wait.");
+        alert("Rate limit exceeded. Try again in an hour.");
         setReviewStatus("idle");
         return;
       }
 
-      if (!res.ok) throw new Error("Review submission failed");
-
+      if (!res.ok) throw new Error("Review failed");
       const data = await res.json();
       setReviewId(data.review_id);
-      
-      // Start polling for results
       startPolling(data.review_id, token);
     } catch (err) {
       console.error(err);
       setReviewStatus("failed");
     }
-  }
+  };
 
-  // Poll for review results
-  function startPolling(id: number, token: string) {
+  const startPolling = (id: number, token: string) => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/${id}`, {
-          headers: { "Authorization": `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (!res.ok) throw new Error("Failed to fetch review");
-
+        if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
 
         if (data.status === "completed") {
@@ -72,90 +91,63 @@ export default function EditorPage() {
         clearInterval(interval);
         setReviewStatus("failed");
       }
-    }, 2000); // Poll every 2 seconds
-  }
+    }, 2000);
+  };
 
+  const initDrag = (e: React.MouseEvent) => {
+    const startY = e.clientY;
+    const startHeight = panelHeight;
+
+    function onMouseMove(e: MouseEvent) {
+      setPanelHeight(startHeight - (e.clientY - startY));
+    }
+    function onMouseUp() {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    }
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  
   return (
     <div className="ide-container">
-      {/* Header */}
-      <header className="ide-header">
-        <div className="header-left">
-          <h1>Code Reviewer IDE</h1>
-        </div>
-        <div className="header-right">
-          <button 
-            onClick={handleReview} 
-            disabled={reviewStatus === "processing" || !code}
-            className="review-button"
-          >
-            {reviewStatus === "processing" ? "Processing..." : "Review Code"}
-          </button>
-          <button onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-          }}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <TopBar
+        theme={theme}
+        setTheme={setTheme}
+        handleReview={handleReview}
+        reviewStatus={reviewStatus}
+        handleLogout={handleLogout}
+      />
 
-      {/* Main editor area */}
       <div className="ide-main">
-        {/* File tree sidebar (placeholder for now) */}
-        <aside className="file-tree">
-          <h3>Files</h3>
-          <div className="file-item active">📄 main.py</div>
-          <button className="new-file-btn">+ New File</button>
-        </aside>
+        <Sidebar
+          files={files}
+          activeFileId={activeFileId}
+          setActiveFileId={setActiveFileId}
+          handleNewFile={handleNewFile}
+        />
 
-        {/* Editor */}
-        <div className="editor-area">
-          <Editor
-            height="100%"
-            defaultLanguage="python"
-            theme="vs-dark"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-            }}
-          /> 
-        </div>
-        
-
+        <EditorContainer
+          activeFile={activeFile}
+          setFiles={setFiles}
+          activeFileId={activeFileId}
+          theme={theme}
+        />
       </div>
 
-      {/* Review panel (slides up when results ready) */}
-      {reviewStatus !== "idle" && (
-        <div className={`review-panel ${reviewStatus === "completed" ? "expanded" : ""}`}>
-          {reviewStatus === "processing" && (
-            <div className="review-loading">
-              <span className="spinner">⏳</span>
-              Processing review... (ID: {reviewId})
-            </div>
-          )}
+      <Resizer initDrag={initDrag} />
 
-          {reviewStatus === "completed" && reviewResult && (
-            <div className="review-results">
-              <div className="review-header">
-                <h3>Review Complete</h3>
-                <button onClick={() => setReviewStatus("idle")}>✕ Close</button>
-              </div>
-              <div className="review-content">
-                <pre>{JSON.stringify(reviewResult, null, 2)}</pre>
-              </div>
-            </div>
-          )}
-
-          {reviewStatus === "failed" && (
-            <div className="review-error">
-              Review failed. Please try again.
-              <button onClick={() => setReviewStatus("idle")}>Close</button>
-            </div>
-          )}
-        </div>
-      )}
+      <ReviewPanel
+        reviewStatus={reviewStatus}
+        reviewResult={reviewResult}
+        isCollapsed={isReviewCollapsed}
+        setIsCollapsed={setIsReviewCollapsed}
+        panelHeight={panelHeight}
+        setPanelHeight={setPanelHeight}
+        reviewId={reviewId}
+      />
     </div>
   );
 }
