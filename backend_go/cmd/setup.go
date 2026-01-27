@@ -25,6 +25,7 @@ type Dependencies struct {
 	mux           *http.ServeMux
 	authService   *services.AuthService
 	reviewService *services.ReviewService
+	fileService   *services.FileService
 }
 
 func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
@@ -47,6 +48,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
 	reviewService := services.NewReviewService(db, r, logger)
+	fileService := services.NewFileService(db, logger)
 
 	return &Dependencies{
 		db:            db,
@@ -54,6 +56,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		mux:           mux,
 		authService:   authService,
 		reviewService: reviewService,
+		fileService:   fileService,
 	}, nil
 }
 
@@ -62,6 +65,7 @@ func setUpMigrations(db *gorm.DB) error {
 		&models.User{},
 		&models.Review{},
 		&models.Enhancement{},
+		&models.File{},
 	); err != nil {
 		return fmt.Errorf("db migrate: %w", err)
 	}
@@ -73,6 +77,7 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 	codeReviewHandler := handlers.NewCodeReviewHandler(logger, deps.db, deps.redis, deps.reviewService)
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
+	fileHandler := handlers.NewFileHandler(logger, deps.db, deps.fileService)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	deps.mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
@@ -85,7 +90,8 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 		),
 	)
 
-	// auth protected routes - may need to refactor, and include review handlers in too
+	// auth protected routes - may need to refactor,
+
 	deps.mux.Handle(
 		"/api/users/me",
 		middleware.AuthMiddleware(jwtSecret)(
@@ -128,6 +134,42 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 			http.HandlerFunc(codeReviewHandler.GetReview),
 		),
 	)
+
+	deps.mux.Handle(
+		"POST /api/files",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(fileHandler.CreateFile),
+		),
+	)
+
+	deps.mux.Handle(
+		"GET /api/files",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(fileHandler.ListFiles),
+		),
+	)
+
+	deps.mux.Handle(
+		"GET /api/files/{id}",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(fileHandler.GetFile),
+		),
+	)
+
+	deps.mux.Handle(
+		"PUT /api/files/{id}",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(fileHandler.UpdateFile),
+		),
+	)
+
+	deps.mux.Handle(
+		"DELETE /api/files/{id}",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(fileHandler.DeleteFile),
+		),
+	)
+
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

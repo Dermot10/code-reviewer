@@ -35,3 +35,14 @@ type Enhancement struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type File struct {
+	ID        uint   `gorm:"primaryKey"`
+	UserID    uint   `gorm:"index; not null"`
+	Name      string `gorm:"not null"`
+	Path      string `gorm:"not null"`
+	Content   string `gorm:"type:text"`
+	ProjectID *uint  `gorm:"index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}

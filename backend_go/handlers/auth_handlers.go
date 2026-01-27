@@ -16,8 +16,6 @@ import (
 // user id
 // user password and email
 
-// gonna inject cache into handler like db
-
 type AuthHandler struct {
 	logger      *slog.Logger
 	authService *services.AuthService
