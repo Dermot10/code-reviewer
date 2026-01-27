@@ -73,7 +73,7 @@ func (h *FileHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp []dto.FileResponse
+	resp := []dto.FileResponse{}
 	for _, file := range files {
 		resp = append(resp, dto.FileResponse{
 			ID:        file.ID,
