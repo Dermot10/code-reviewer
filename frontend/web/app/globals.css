@@ -1,7 +1,7 @@
-/* app/globals.css */
-
+/* ===== Google Fonts ===== */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+/* ===== Global ===== */
 * {
   margin: 0;
   padding: 0;
@@ -33,8 +33,7 @@
 }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
@@ -143,21 +142,56 @@ body {
   justify-content: center;
 }
 
-/* ===== Editor ===== */
+/* ===== Editor Container ===== */
 .editor-container {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
   min-width: 0;
   background: var(--bg-primary);
 }
 
+/* ===== Editor Toolbar (floating Save button) ===== */
+.editor-toolbar {
+  background: var(--bg-secondary);
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.editor-toolbar button {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.editor-toolbar button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.editor-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Tabs ===== */
 .editor-tabs {
   display: flex;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
   height: 35px;
   flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .tab {
@@ -169,6 +203,7 @@ body {
   cursor: pointer;
   border-right: 1px solid var(--border-color);
   transition: background 0.15s;
+  background: var(--bg-secondary);
 }
 
 .tab:hover {
@@ -177,21 +212,45 @@ body {
 
 .tab.active {
   background: var(--bg-primary);
+  color: #fff;
+  font-weight: 500;
+  border-bottom: 2px solid var(--accent);
+  position: relative;
+  top: 1px;
+}
+
+.tab-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 0.25rem;
+}
+
+.tab-close:hover {
+  color: var(--text-primary);
+}
+
+.dirty-indicator {
+  color: #f97316;
+  margin-left: 2px;
 }
 
 /* ===== Review Panel ===== */
-
 .resizer {
   height: 5px;
   width: 100%;
   cursor: row-resize;
   background: #ccc;
 }
+
 .review-content-wrapper {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
 }
+
 .review-panel {
   display: flex;
   flex-direction: column;

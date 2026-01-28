@@ -8,16 +8,17 @@ import ReviewPanel from "./components/reviewPanel";
 import Resizer from "./components/resizer";
 import { useEditorFiles } from "./hooks/useEditorFiles";
 import { useReview } from "./hooks/useReview";
+import Tabs from "./components/tabs";
 
 export default function EditorPage() {
 
   const [theme, setTheme] = useState<"vs-dark" | "light">("vs-dark");
-  const { files, setFiles, activeFile, activeFileId, setActiveFileId, handleNewFile } =
+  const [dirtyFiles, setDirtyFiles] = useState<Set<number>>(new Set());
+  const [openFiles, setOpenFiles] = useState<number[]>([]);
+  const { files, setFiles, activeFile, activeFileId, setActiveFileId, handleNewFile, handleSaveFile, handleDeleteFile } =
     useEditorFiles();
-
   const { reviewStatus, reviewResult, reviewId, handleReview } =
     useReview(activeFile);
- 
   const [isReviewCollapsed, setIsReviewCollapsed] = useState(false);
   const [panelHeight, setPanelHeight] = useState(200);
 
@@ -43,6 +44,25 @@ export default function EditorPage() {
     window.addEventListener("mouseup", onMouseUp);
   };
 
+  function openFile(fileId: number) {
+    setOpenFiles(prev => 
+      prev.includes(fileId) ? prev : [...prev, fileId]
+    );
+    setActiveFileId(fileId)
+  }
+
+  function closeFile(fileId: number) { 
+    setOpenFiles(prev => {
+      const newOpenFiles = prev.filter(id => id !== fileId); 
+
+      if (fileId === activeFileId) {
+        setActiveFileId(newOpenFiles[0] ?? null);
+      }
+
+      return newOpenFiles;
+    });
+  }
+
   
   return (
     <div className="ide-container">
@@ -57,17 +77,37 @@ export default function EditorPage() {
       <div className="ide-main">
         <Sidebar
           files={files}
+          dirtyFiles={dirtyFiles}
           activeFileId={activeFileId}
-          setActiveFileId={setActiveFileId}
+          openFile={openFile}
           handleNewFile={handleNewFile}
+          handleDeleteFile={handleDeleteFile}
         />
 
-        <EditorContainer
-          activeFile={activeFile}
-          setFiles={setFiles}
-          activeFileId={activeFileId}
-          theme={theme}
-        />
+        <div className="editor-container">
+          <Tabs
+            files={files}
+            openFiles={openFiles}
+            activeFileId={activeFileId}
+            dirtyFiles={dirtyFiles}
+            setActiveFileId={setActiveFileId}
+            closeFile={closeFile}
+          />
+
+          <EditorContainer
+            theme={theme}
+            activeFile={activeFile}
+            setFiles={setFiles}
+            activeFileId={activeFileId}
+            dirtyFiles={dirtyFiles}       // <-- pass the Set itself
+            setDirtyFiles={setDirtyFiles}
+            handleSaveFile={handleSaveFile}
+            files={files}
+            openFiles={openFiles}
+            setActiveFileId={setActiveFileId}
+            closeFile={closeFile}
+          />
+        </div>
       </div>
 
       <Resizer initDrag={initDrag} />

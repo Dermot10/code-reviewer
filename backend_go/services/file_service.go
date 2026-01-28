@@ -54,6 +54,7 @@ func (f *FileService) GetFile(userID, fileID uint) (*models.File, error) {
 }
 
 func (f *FileService) ListFiles(userID uint) ([]models.File, error) {
+	// return empty slice if null to be marshalled
 	files := []models.File{}
 	if err := f.db.Where("user_id = ?", userID).Find(&files).Error; err != nil {
 		return nil, fmt.Errorf("failed to list files: %w", err)

@@ -74,6 +74,7 @@ func (h *FileHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := []dto.FileResponse{}
+
 	for _, file := range files {
 		resp = append(resp, dto.FileResponse{
 			ID:        file.ID,

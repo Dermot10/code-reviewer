@@ -10,12 +10,13 @@ export function useEditorFiles(){
     const [activeFileId, setActiveFileId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true); 
 
-
+    // will run on mount, and fallback case for empty file tree
     useEffect(() => {
         fetchFiles();
     }, []); 
 
     async function fetchFiles(){
+        // send token to authenticated endpoint before parsing response data and setting file state
         const token = localStorage.getItem("token");
         if (!token) return;
 
@@ -28,7 +29,7 @@ export function useEditorFiles(){
 
             const data: EditorFile[] = await res.json();
 
-            // Debug: See what you're actually getting
+            // Debug
             console.log("API Response:", data);
             console.log("Is Array?", Array.isArray(data));
             
@@ -43,7 +44,8 @@ export function useEditorFiles(){
 
             if (data.length > 0) {
                 setActiveFileId(data[0].id);
-            }
+            } 
+
         } catch (err) {
             console.error("Failed to fetch files:", err);
         } finally {
@@ -100,6 +102,33 @@ export function useEditorFiles(){
             console.error("Failed to save file:", err); 
         }
     }
+
+
+    async function handleDeleteFile(fileId: number) {
+        const token = localStorage.getItem("token");
+        if (!token) return; 
+
+        if (!confirm("Delete this file?")) return; 
+
+        try {
+            const res = await fetch(`${API_URL}/api/files/${fileId}`, {
+                method: "DELETE", 
+                headers: { Authorization: `Bearer ${token}`},
+           });
+
+           if (!res.ok) throw new Error("Failed to delete"); 
+
+           setFiles(files.filter(f => f.id !== fileId));
+
+           if (activeFileId === fileId) {
+            setActiveFileId(null);
+           }
+        }catch (err){
+            console.error("Failed to delete file:", err);
+        }
+    }
+
+    // derived from existing state for synchronicity 
     const activeFile = (files && files.length > 0) 
         ? files.find(f => f.id === activeFileId) ?? null
         : null;
@@ -107,11 +136,12 @@ export function useEditorFiles(){
     return {
     files: files || [],
     setFiles,
-    activeFile,
+    activeFile: activeFile ?? undefined,
     activeFileId,
     setActiveFileId,
     handleNewFile,
     handleSaveFile,
+    handleDeleteFile,
     loading,
   };
 }
