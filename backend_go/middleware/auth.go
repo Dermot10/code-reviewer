@@ -47,8 +47,19 @@ func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			userID := uint(claims["user_id"].(float64))
+			idClaim, ok := claims["user_id"]
+			if !ok {
+				http.Error(w, "user_id missing in token", http.StatusUnauthorized)
+				return
+			}
 
+			idFloat, ok := idClaim.(float64) // jwt numeric claims - float64
+			if !ok {
+				http.Error(w, "user_id invalid type", http.StatusUnauthorized)
+				return
+			}
+
+			userID := uint(idFloat)
 			// add user_id to context
 			ctx := context.WithValue(r.Context(), UserIDKey, userID)
 

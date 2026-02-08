@@ -16,12 +16,14 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/services"
+	"github.com/dermot10/code-reviewer/backend_go/websocket"
 	"gorm.io/gorm"
 )
 
 type Dependencies struct {
 	redis         *redis.RedisClient
 	db            *gorm.DB
+	wsHub         *websocket.Hub
 	mux           *http.ServeMux
 	authService   *services.AuthService
 	reviewService *services.ReviewService
@@ -43,6 +45,8 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		return nil, err
 	}
 
+	wsHub := websocket.NewHub()
+
 	mux := http.NewServeMux()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -53,6 +57,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 	return &Dependencies{
 		db:            db,
 		redis:         r,
+		wsHub:         wsHub,
 		mux:           mux,
 		authService:   authService,
 		reviewService: reviewService,
@@ -78,6 +83,7 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
 	fileHandler := handlers.NewFileHandler(logger, deps.db, deps.fileService)
+	wsHandler := handlers.NewWSHandler(logger, deps.wsHub)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	deps.mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)
@@ -170,6 +176,12 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 		),
 	)
 
+	deps.mux.Handle(
+		"/ws",
+		middleware.AuthMiddleware(jwtSecret)(
+			http.HandlerFunc(wsHandler.HandleWebsSocket),
+		),
+	)
 }
 
 func corsMiddleware(next http.Handler) http.Handler {
