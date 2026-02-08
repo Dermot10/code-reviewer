@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/dermot10/code-reviewer/backend_go/config"
+	"github.com/dermot10/code-reviewer/backend_go/websocket"
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/errgroup"
 )
@@ -35,6 +36,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	wsHub := websocket.NewHub()
+
 	defer func() {
 		logger.Info("cleaning up resources")
 		if err := deps.redis.Close(); err != nil {
@@ -49,12 +52,18 @@ func main() {
 	registerRoutes(logger, deps, cfg.JWTSecret)
 
 	g, ctx := errgroup.WithContext(ctx)
+
 	g.Go(func() error {
 		return setUpServer(ctx, deps.mux)
 	})
 
 	g.Go(func() error {
 		deps.reviewService.ListenForCompletions(ctx)
+		return nil
+	})
+
+	g.Go(func() error {
+		wsHub.Run(ctx)
 		return nil
 	})
 
