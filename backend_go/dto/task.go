@@ -1,5 +1,9 @@
 package dto
 
+// task dto to manage lifecycle of the request
+// Redis bound
+// db bound
+
 type ReviewTask struct {
 	Type     string `json:"type"`
 	UserID   uint   `json:"user_id"`

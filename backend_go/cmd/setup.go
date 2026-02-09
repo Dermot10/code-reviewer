@@ -51,7 +51,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
-	reviewService := services.NewReviewService(db, r, logger)
+	reviewService := services.NewReviewService(db, r, logger, wsHub)
 	fileService := services.NewFileService(db, logger)
 
 	return &Dependencies{

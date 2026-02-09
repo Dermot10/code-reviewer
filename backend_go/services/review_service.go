@@ -9,6 +9,7 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/dermot10/code-reviewer/backend_go/redis"
+	"github.com/dermot10/code-reviewer/backend_go/websocket"
 	"gorm.io/gorm"
 )
 
@@ -16,10 +17,11 @@ type ReviewService struct {
 	db     *gorm.DB
 	redis  *redis.RedisClient
 	logger *slog.Logger
+	wsHub  *websocket.Hub
 }
 
-func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger) *ReviewService {
-	return &ReviewService{db: db, redis: redis, logger: logger}
+func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger, wsHub *websocket.Hub) *ReviewService {
+	return &ReviewService{db: db, redis: redis, logger: logger, wsHub: wsHub}
 }
 
 func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, error) {
@@ -50,6 +52,8 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 	if err := s.redis.PushQueue(ctx, data); err != nil {
 		return nil, fmt.Errorf("failed to push review task to queue: %w", err)
 	}
+
+	s.emitReviewStarted(userID, review.ID)
 
 	if err := s.db.Model(review).Update("status", "processing").Error; err != nil {
 		return nil, err
@@ -128,6 +132,13 @@ func (s *ReviewService) ListenForCompletions(ctx context.Context) {
 				continue
 			}
 
+			// get review for notification, minimal overhead
+			var review models.Review
+			if err := s.db.First(&review, reviewID).Error; err != nil {
+				s.logger.Error("failed to get review", "review_id", reviewID, "error", err)
+				continue
+			}
+
 			// Update database
 			if err := s.db.Model(&models.Review{}).Where("id = ?", reviewID).Updates(map[string]interface{}{
 				"status": "completed",
@@ -142,6 +153,8 @@ func (s *ReviewService) ListenForCompletions(ctx context.Context) {
 				resultKey,
 				fmt.Sprintf("review:%d:lock", reviewID),
 			)
+
+			s.emitReviewCompleted(review.UserID, reviewID, resultData)
 
 			s.logger.Info("review completed and redis deps cleaned up", "review_id", reviewID)
 		}
