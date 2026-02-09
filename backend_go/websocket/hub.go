@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"sync"
 )
@@ -20,6 +19,12 @@ type Hub struct {
 	Unregister chan *Client
 
 	mu sync.RWMutex
+}
+
+// Internal routing wrapper
+type Message struct {
+	UserID uint
+	Data   []byte // pre-marshaled JSON from dto
 }
 
 func NewHub() *Hub {
@@ -66,21 +71,12 @@ func (h *Hub) Run(ctx context.Context) {
 
 		case message := <-h.broadcast:
 			h.mu.RLock()
-			var userClients []*Client
-			for c := range h.clients[message.UserID] {
-				userClients = append(userClients, c)
-			}
+			clients := h.clients[message.UserID]
 			h.mu.RUnlock()
 
-			data, err := json.Marshal(message)
-			if err != nil {
-				log.Printf("failed to marshal message: %v", err)
-				continue
-			}
-
-			for _, client := range userClients {
+			for client := range clients {
 				select {
-				case client.Send <- data:
+				case client.Send <- message.Data:
 				default:
 					h.Unregister <- client
 				}
