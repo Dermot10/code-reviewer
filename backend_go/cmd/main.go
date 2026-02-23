@@ -8,7 +8,6 @@ import (
 	"syscall"
 
 	"github.com/dermot10/code-reviewer/backend_go/config"
-	"github.com/dermot10/code-reviewer/backend_go/websocket"
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/errgroup"
 )
@@ -21,7 +20,6 @@ func main() {
 	}
 
 	cfg, err := config.LoadConfig()
-
 	if err != nil {
 		logger.Error("error loading config", "error", err)
 		os.Exit(1)
@@ -35,8 +33,6 @@ func main() {
 		logger.Error("failed to setup dependencies", "error", err)
 		os.Exit(1)
 	}
-
-	wsHub := websocket.NewHub()
 
 	defer func() {
 		logger.Info("cleaning up resources")
@@ -63,7 +59,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		wsHub.Run(ctx)
+		deps.wsHub.Run(ctx)
 		return nil
 	})
 

@@ -8,7 +8,8 @@ const (
 	EventReviewStarted   WSEventType = "review.started"
 	EventReviewCompleted WSEventType = "review.completed"
 	EventReviewFailed    WSEventType = "review.failed"
-	EventFileUpload      WSEventType = "file.updated"
+	EventFileUpload      WSEventType = "file.uploaded"
+	EventFileUpdated     WSEventType = "file.updated"
 	EventChatMessage     WSEventType = "chat.message"
 )
 
@@ -39,7 +40,6 @@ type ReviewFailedPayload struct {
 // e.g cursor move, selection, patch edits
 type FileUpdatedPayload struct {
 	FileID  uint   `json:"file_id"`
-	UserID  uint   `json:"user_id"`
 	Content string `json:"content"`
 }
 

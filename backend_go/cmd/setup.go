@@ -179,7 +179,7 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 	deps.mux.Handle(
 		"/ws",
 		middleware.AuthMiddleware(jwtSecret)(
-			http.HandlerFunc(wsHandler.HandleWebsSocket),
+			http.HandlerFunc(wsHandler.HandleWebSocket),
 		),
 	)
 }

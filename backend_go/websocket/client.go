@@ -1,10 +1,12 @@
 package websocket
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
-	"github.com/gorilla/websocket"
+	"github.com/dermot10/code-reviewer/backend_go/dto"
+	gorilla_ws "github.com/gorilla/websocket"
 )
 
 const (
@@ -17,7 +19,7 @@ const (
 // single websocket conn
 type Client struct {
 	Hub    *Hub
-	Conn   *websocket.Conn
+	Conn   *gorilla_ws.Conn
 	Send   chan []byte // buffered chan for outbound msgs
 	UserID uint
 }
@@ -41,7 +43,7 @@ func (c *Client) ReadPump() {
 	for {
 		_, message, err := c.Conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			if gorilla_ws.IsUnexpectedCloseError(err, gorilla_ws.CloseGoingAway, gorilla_ws.CloseAbnormalClosure) {
 				log.Printf("websocket error: %v", err)
 			}
 			break
@@ -49,7 +51,13 @@ func (c *Client) ReadPump() {
 
 		log.Printf("received message from user %d: %s", c.UserID, message)
 
-		c.Send <- message
+		var event dto.WSEvent
+		if err := json.Unmarshal(message, &event); err != nil {
+			log.Println("invalid ws payload:", err)
+			continue
+		}
+
+		// return event
 	}
 }
 
@@ -68,20 +76,20 @@ func (c *Client) WritePump() {
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
 				// hub closed the chan, shutdown mechanism
-				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				c.Conn.WriteMessage(gorilla_ws.CloseMessage, []byte{})
 				return
 			}
 
 			// one msg = one ws frame (clean json event for parsing)
 			// alternative to streaming batched msgs and flushing unneeded frames under high-throughput, less batching efficiency
-			if err := c.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			if err := c.Conn.WriteMessage(gorilla_ws.TextMessage, message); err != nil {
 				return
 			}
 
 		case <-ticker.C:
 			// ping, keep alive conn
 			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			if err := c.Conn.WriteMessage(gorilla_ws.PingMessage, nil); err != nil {
 				return
 			}
 		}
