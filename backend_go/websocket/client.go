@@ -18,10 +18,11 @@ const (
 
 // single websocket conn
 type Client struct {
-	Hub    *Hub
-	Conn   *gorilla_ws.Conn
-	Send   chan []byte // buffered chan for outbound msgs
-	UserID uint
+	Hub       *Hub
+	Conn      *gorilla_ws.Conn
+	Send      chan []byte // buffered chan for outbound msgs
+	UserID    uint
+	OnMessage func(userID uint, message []byte)
 }
 
 // reads msgs from ws connection
