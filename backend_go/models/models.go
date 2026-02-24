@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
@@ -45,4 +49,24 @@ type File struct {
 	ProjectID *uint  `gorm:"index"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type ChatMessage struct {
+	ID             uint           `gorm:"primaryKey"`
+	ConversationID uint           `gorm:"index:idx_conv_created"`
+	Role           string         // for system level roles
+	Content        string         `gorm:"type:text"`
+	TokenCount     int            // for billing/tracking
+	CreatedAt      time.Time      `gorm:"index:idx_conv_created"`
+	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
+type Conversation struct {
+	ID        uint `gorm:"primaryKey"`
+	UserID    uint `gorm:"index:idx_user_updated"`
+	Title     string
+	Archived  bool `gorm:"default:false"`
+	CreatedAt time.Time
+	UpdatedAt time.Time      `gorm:"index:idx_user_updated"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
