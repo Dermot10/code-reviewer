@@ -93,8 +93,41 @@ func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 	case dto.EventFileUpload:
 		h.handleFileUpload(userID, event)
 
-	case dto.EventChatMessage:
-		h.handleChatMessage(userID, event)
+	case dto.EventFileUpdated:
+		h.handleFileUpdated(userID, event) // if client can update existing files
+
+	case dto.EventMessageSend:
+		h.handleMessageSend(userID, event)
+
+	case dto.EventMessageCreated:
+		h.handleMessageCreated(userID, event) // optional if server-originated messages
+
+	case dto.EventConversationCreate:
+		h.handleConversationCreate(userID, event)
+
+	case dto.EventConversationCreated:
+		h.handleConversationCreated(userID, event) // usually server-originated
+
+	case dto.EventConversationArchive:
+		h.handleConversationArchive(userID, event)
+
+	case dto.EventConversationArchived:
+		h.handleConversationArchived(userID, event) // server confirms
+
+	case dto.EventConversationRename:
+		h.handleConversationRename(userID, event)
+
+	case dto.EventConversationRenamed:
+		h.handleConversationRenamed(userID, event) // server confirms
+
+	case dto.EventReviewStarted:
+		h.handleReviewStarted(userID, event)
+
+	case dto.EventReviewCompleted:
+		h.handleReviewCompleted(userID, event)
+
+	case dto.EventReviewFailed:
+		h.handleReviewFailed(userID, event)
 
 	default:
 		log.Println("unknown event type:", event.Type)
@@ -113,17 +146,23 @@ func (h *WSHandler) handleFileUpload(userID uint, event dto.WSEvent) {
 		return
 	}
 
-	responsePayload, _ := json.Marshal(dto.FileUpdatedPayload{
+	responsePayload, err := json.Marshal(dto.FileUpdatedPayload{
 		FileID:  file.ID,
 		Content: file.Content,
 	})
+	if err != nil {
+		return
+	}
 
 	response := dto.WSEvent{
 		Type:    dto.EventFileUpdated,
 		Payload: responsePayload,
 	}
 
-	data, _ := json.Marshal(response)
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
 
 	h.hub.Broadcast(websocket.Message{
 		UserID: userID,
@@ -131,4 +170,41 @@ func (h *WSHandler) handleFileUpload(userID uint, event dto.WSEvent) {
 	})
 }
 
-func (h *WSHandler) handleChatMessage(userID uint, event dto.WSEvent) {}
+func (h *WSHandler) handleMessageSend(userID uint, event dto.WSEvent) {}
+
+func (h *WSHandler) handleConversationCreate(userID uint, event dto.WSEvent) {
+	var payload dto.ConversationCreatePayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalud conversartion create payload", "error", err)
+		return
+	}
+
+	conv, err := h.chatService.CreateConversation(userID, payload.Title)
+	if err != nil {
+		h.logger.Error("failed to create conversation", "error", err)
+		return
+	}
+	responsePayload, err := json.Marshal(dto.ConversationCreatedPayload{
+		ConversationID: conv.ID,
+		Title:          conv.Title,
+	})
+	if err != nil {
+		return
+	}
+
+	response := dto.WSEvent{
+		Type:    dto.EventConversationCreated,
+		Payload: responsePayload,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	h.hub.Broadcast(websocket.Message{
+		UserID: userID,
+		Data:   data,
+	})
+
+}
