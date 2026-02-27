@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 
@@ -62,18 +61,6 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	// go func() {
-	// 	for {
-	// 		_, msg, err := client.Conn.ReadMessage()
-	// 		if err != nil {
-	// 			log.Println("read error:", err)
-	// 			return
-	// 		}
-	// 		log.Println("received from client:", string(msg))
-	// 		client.Conn.WriteMessage(gorilla_ws.TextMessage, msg)
-	// 	}
-	// }()
-
 	h.hub.Register <- client
 
 	h.logger.Info("websocket connected", "user_id", userID)
@@ -85,56 +72,28 @@ func (h *WSHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 	var event dto.WSEvent
 	if err := json.Unmarshal(raw, &event); err != nil {
+		h.logger.Error("invalid ws event", "event", err)
 		return
 	}
 
-	switch event.Type {
+	handlers := map[dto.WSEventType]func(uint, dto.WSEvent){
+		dto.EventFileUpload:          h.FileUpload,
+		dto.EventFileUpdated:         h.FileUpdate,
+		dto.EventMessageSend:         h.MessageSend,
+		dto.EventConversationCreate:  h.ConversationCreate,
+		dto.EventConversationArchive: h.ConversationArchive,
+		dto.EventConversationRename:  h.ConversationRename,
+		dto.EventConvrsationDelete:   h.ConversationDelete,
+	}
 
-	case dto.EventFileUpload:
-		h.handleFileUpload(userID, event)
-
-	case dto.EventFileUpdated:
-		h.handleFileUpdated(userID, event) // if client can update existing files
-
-	case dto.EventMessageSend:
-		h.handleMessageSend(userID, event)
-
-	case dto.EventMessageCreated:
-		h.handleMessageCreated(userID, event) // optional if server-originated messages
-
-	case dto.EventConversationCreate:
-		h.handleConversationCreate(userID, event)
-
-	case dto.EventConversationCreated:
-		h.handleConversationCreated(userID, event) // usually server-originated
-
-	case dto.EventConversationArchive:
-		h.handleConversationArchive(userID, event)
-
-	case dto.EventConversationArchived:
-		h.handleConversationArchived(userID, event) // server confirms
-
-	case dto.EventConversationRename:
-		h.handleConversationRename(userID, event)
-
-	case dto.EventConversationRenamed:
-		h.handleConversationRenamed(userID, event) // server confirms
-
-	case dto.EventReviewStarted:
-		h.handleReviewStarted(userID, event)
-
-	case dto.EventReviewCompleted:
-		h.handleReviewCompleted(userID, event)
-
-	case dto.EventReviewFailed:
-		h.handleReviewFailed(userID, event)
-
-	default:
-		log.Println("unknown event type:", event.Type)
+	if handler, ok := handlers[event.Type]; ok {
+		handler(userID, event)
+	} else {
+		h.logger.Warn("unknown event type", "type", event.Type)
 	}
 }
 
-func (h *WSHandler) handleFileUpload(userID uint, event dto.WSEvent) {
+func (h *WSHandler) FileUpload(userID uint, event dto.WSEvent) {
 	var payload dto.FileUpdatedPayload
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		h.logger.Error("invalid file upload payload", "error", err)
@@ -170,12 +129,87 @@ func (h *WSHandler) handleFileUpload(userID uint, event dto.WSEvent) {
 	})
 }
 
-func (h *WSHandler) handleMessageSend(userID uint, event dto.WSEvent) {}
+func (h *WSHandler) FileUpdate(userID uint, event dto.WSEvent) {
+	var payload dto.FileUpdatedPayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid file update payload", "error", err)
+		return
+	}
 
-func (h *WSHandler) handleConversationCreate(userID uint, event dto.WSEvent) {
+	updatedFile, err := h.fileService.UpdateFile(userID, payload.FileID, payload.Content)
+	if err != nil {
+		h.logger.Error("failed to update file", "error", err)
+		return
+	}
+
+	responsePayload, err := json.Marshal(dto.FileUpdatedPayload{
+		FileID:  updatedFile.ID,
+		Content: updatedFile.Content,
+	})
+	if err != nil {
+		return
+	}
+
+	response := dto.WSEvent{
+		Type:    dto.EventFileUpdated,
+		Payload: responsePayload,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	h.hub.Broadcast(websocket.Message{
+		UserID: userID,
+		Data:   data,
+	})
+}
+
+func (h *WSHandler) MessageSend(userID uint, event dto.WSEvent) {
+	var payload dto.MessageSendPayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid chat message payload", "error", err)
+		return
+	}
+
+	msg, err := h.chatService.CreateMessage(userID, payload.ConversationID, "user", payload.Content)
+	if err != nil {
+		h.logger.Error("failed to create chat message", "error", err)
+		return
+	}
+
+	responsePayload, err := json.Marshal(dto.MessageCreatedPayload{
+		ID:             msg.ID,
+		ConversationID: msg.ConversationID,
+		Role:           msg.Role,
+		Content:        msg.Content,
+		CreatedAt:      msg.CreatedAt,
+	})
+	if err != nil {
+		return
+	}
+
+	response := dto.WSEvent{
+		Type:    dto.EventMessageCreated,
+		Payload: responsePayload,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	h.hub.Broadcast(websocket.Message{
+		UserID: userID,
+		Data:   data,
+	})
+}
+
+func (h *WSHandler) ConversationCreate(userID uint, event dto.WSEvent) {
 	var payload dto.ConversationCreatePayload
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {
-		h.logger.Error("invalud conversartion create payload", "error", err)
+		h.logger.Error("invalid conversartion create payload", "error", err)
 		return
 	}
 
@@ -207,4 +241,91 @@ func (h *WSHandler) handleConversationCreate(userID uint, event dto.WSEvent) {
 		Data:   data,
 	})
 
+}
+
+func (h *WSHandler) ConversationArchive(userID uint, event dto.WSEvent) {
+	var payload dto.ConversationArhivePayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid conversation update payload", "error", err)
+		return
+	}
+
+	err := h.chatService.ArchiveConversation(userID, payload.ConversationID)
+	if err != nil {
+		h.logger.Error("failed to update conversation", "error", err)
+		return
+	}
+
+	responsePayload, err := json.Marshal(dto.ConversationArchivedPayload{
+		ConversationID: payload.ConversationID,
+	})
+	if err != nil {
+		return
+	}
+
+	response := dto.WSEvent{
+		Type:    dto.EventConversationArchived,
+		Payload: responsePayload,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	h.hub.Broadcast(websocket.Message{
+		UserID: userID,
+		Data:   data,
+	})
+}
+
+func (h *WSHandler) ConversationRename(userID uint, event dto.WSEvent) {
+	var payload dto.ConversationRenamePayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid conversation rename payload", "error", err)
+		return
+	}
+
+	err := h.chatService.RenameConversation(userID, payload.ConversationID, payload.Title)
+	if err != nil {
+		h.logger.Error("failed to rename conversation", "error", err)
+		return
+	}
+
+	responsePayload, err := json.Marshal(dto.ConversationRenamedPayload{
+		ConversationID: payload.ConversationID,
+		Title:          payload.Title,
+	})
+	if err != nil {
+		return
+	}
+
+	response := dto.WSEvent{
+		Type:    dto.EventConversationRenamed,
+		Payload: responsePayload,
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		return
+	}
+
+	h.hub.Broadcast(websocket.Message{
+		UserID: userID,
+		Data:   data,
+	})
+}
+
+func (h *WSHandler) ConversationDelete(userID uint, event dto.WSEvent) {
+	var payload dto.ConversationDeletePayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid conversation delete payload", "error", err)
+		return
+	}
+
+	err := h.chatService.DeleteConversation(userID, payload.ConversationID)
+	if err != nil {
+		h.logger.Error("failed to delete conversation", "error", err)
+		return
+	}
 }

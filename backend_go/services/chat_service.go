@@ -90,3 +90,24 @@ func (s *ChatService) ArchiveConversation(userID, conversationID uint) error {
 		Where("id = ? AND user_id = ?", conversationID, userID).
 		Update("archived", true).Error
 }
+
+func (s *ChatService) RenameConversation(userID, conversationID uint, title string) error {
+	return s.db.
+		Model(&models.Conversation{}).
+		Where("id = ? AND user_id = ?", conversationID, userID).
+		Update("title", title).
+		Error
+}
+
+func (s *ChatService) DeleteConversation(userID, conversationID uint) error {
+	result := s.db.Where("id = ? AND user_id = ?", conversationID, userID).
+		Delete(&models.Conversation{})
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("conversation not found or unauthorized")
+	}
+	return nil
+}

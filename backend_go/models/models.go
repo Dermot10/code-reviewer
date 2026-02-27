@@ -54,7 +54,7 @@ type File struct {
 type ChatMessage struct {
 	ID             uint           `gorm:"primaryKey"`
 	ConversationID uint           `gorm:"index:idx_conv_created"`
-	Role           string         // for system level roles
+	Role           string         // for system level roles (user or assistant)
 	Content        string         `gorm:"type:text"`
 	TokenCount     int            // for billing/tracking
 	CreatedAt      time.Time      `gorm:"index:idx_conv_created"`

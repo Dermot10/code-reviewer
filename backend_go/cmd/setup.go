@@ -28,6 +28,7 @@ type Dependencies struct {
 	authService   *services.AuthService
 	reviewService *services.ReviewService
 	fileService   *services.FileService
+	chatService   *services.ChatService
 }
 
 func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
@@ -53,6 +54,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
 	reviewService := services.NewReviewService(db, r, logger, wsHub)
 	fileService := services.NewFileService(db, logger)
+	chatService := services.NewChatService(db, logger)
 
 	return &Dependencies{
 		db:            db,
@@ -62,6 +64,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		authService:   authService,
 		reviewService: reviewService,
 		fileService:   fileService,
+		chatService:   chatService,
 	}, nil
 }
 
@@ -83,7 +86,7 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
 	fileHandler := handlers.NewFileHandler(logger, deps.db, deps.fileService)
-	wsHandler := handlers.NewWSHandler(logger, deps.wsHub)
+	wsHandler := handlers.NewWSHandler(logger, deps.wsHub, deps.fileService, deps.chatService)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	deps.mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)

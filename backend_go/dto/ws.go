@@ -15,14 +15,20 @@ const (
 	EventFileUpload  WSEventType = "file.uploaded"
 	EventFileUpdated WSEventType = "file.updated"
 
-	EventConversationCreate   WSEventType = "conversation.create"
-	EventConversationCreated  WSEventType = "conversation.created"
+	EventAssistantPrompt WSEventType = "assistant.prompt"
+	EventAssistantStream WSEventType = "assistant.stream"
+
+	EventConversationCreate  WSEventType = "conversation.create"
+	EventConversationCreated WSEventType = "conversation.created"
+
 	EventConversationArchive  WSEventType = "conversation.archive"
 	EventConversationArchived WSEventType = "conversation.archived"
-	EventConversationRename   WSEventType = "conversation.rename"
-	EventConversationRenamed  WSEventType = "conversation.renamed"
-	EventConvrsationDelete    WSEventType = "conversation.delete"
-	EventConversationDeleted  WSEventType = "conversation.deleted"
+
+	EventConversationRename  WSEventType = "conversation.rename"
+	EventConversationRenamed WSEventType = "conversation.renamed"
+
+	EventConvrsationDelete   WSEventType = "conversation.delete"
+	EventConversationDeleted WSEventType = "conversation.deleted"
 
 	EventMessageSend    WSEventType = "message.send"
 	EventMessageCreated WSEventType = "message.created"
@@ -51,14 +57,17 @@ type ReviewFailedPayload struct {
 	Error    string `json:"error"`
 }
 
-// may extend for more granular events corresponding to specific events
-// e.g cursor move, selection, patch edits
+// // inbound
 type FileUpdatedPayload struct {
 	FileID  uint   `json:"file_id"`
 	Content string `json:"content"`
 }
 
-// inbound
+type PromptPayload struct {
+	ConversationID uint   `json:"conversation_id"`
+	Prompt         string `json:"prompt"`
+}
+
 type ConversationCreatePayload struct {
 	Title string `json:"title"`
 }
@@ -82,6 +91,12 @@ type MessageSendPayload struct {
 }
 
 // outbound
+type AssistantStreamPayload struct {
+	ConversationID uint   `json:"conversation_id"`
+	Chunk          string `json:"chunk"`
+	Done           bool   `json:"done"` //end of stream flag
+}
+
 type ConversationCreatedPayload struct {
 	ConversationID uint   `json:"id"`
 	Title          string `json:"title"`

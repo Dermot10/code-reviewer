@@ -49,3 +49,5 @@ func (s *ReviewService) emitReviewCompleted(userID, reviewID uint, result string
 		Data:   eventData,
 	})
 }
+
+func (a *AssistantService) emitAssistantChunk(userID, conversationID uint, chunk string) {}
