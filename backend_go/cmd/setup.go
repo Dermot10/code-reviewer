@@ -21,14 +21,15 @@ import (
 )
 
 type Dependencies struct {
-	redis         *redis.RedisClient
-	db            *gorm.DB
-	wsHub         *websocket.Hub
-	mux           *http.ServeMux
-	authService   *services.AuthService
-	reviewService *services.ReviewService
-	fileService   *services.FileService
-	chatService   *services.ChatService
+	redis            *redis.RedisClient
+	db               *gorm.DB
+	wsHub            *websocket.Hub
+	mux              *http.ServeMux
+	authService      *services.AuthService
+	reviewService    *services.ReviewService
+	fileService      *services.FileService
+	chatService      *services.ChatService
+	assistantService *services.AssistantService
 }
 
 func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, error) {
@@ -52,19 +53,21 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
-	reviewService := services.NewReviewService(db, r, logger, wsHub)
+	reviewService := services.NewReviewService(db, r, logger)
 	fileService := services.NewFileService(db, logger)
 	chatService := services.NewChatService(db, logger)
+	assistantService := services.NewAssistantService(db, r, logger, wsHub)
 
 	return &Dependencies{
-		db:            db,
-		redis:         r,
-		wsHub:         wsHub,
-		mux:           mux,
-		authService:   authService,
-		reviewService: reviewService,
-		fileService:   fileService,
-		chatService:   chatService,
+		db:               db,
+		redis:            r,
+		wsHub:            wsHub,
+		mux:              mux,
+		authService:      authService,
+		reviewService:    reviewService,
+		fileService:      fileService,
+		chatService:      chatService,
+		assistantService: assistantService,
 	}, nil
 }
 
@@ -86,7 +89,7 @@ func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
 	fileHandler := handlers.NewFileHandler(logger, deps.db, deps.fileService)
-	wsHandler := handlers.NewWSHandler(logger, deps.wsHub, deps.fileService, deps.chatService)
+	wsHandler := handlers.NewWSHandler(logger, deps.wsHub, deps.fileService, deps.chatService, deps.assistantService)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 
 	deps.mux.HandleFunc("/api/auth/register", authReviewHandler.CreateUser)

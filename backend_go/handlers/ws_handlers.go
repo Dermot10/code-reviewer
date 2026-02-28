@@ -21,18 +21,20 @@ var upgrader = gorilla_ws.Upgrader{
 }
 
 type WSHandler struct {
-	logger      *slog.Logger
-	hub         *websocket.Hub
-	fileService *services.FileService
-	chatService *services.ChatService
+	logger           *slog.Logger
+	hub              *websocket.Hub
+	fileService      *services.FileService
+	chatService      *services.ChatService
+	assistantService *services.AssistantService
 }
 
-func NewWSHandler(logger *slog.Logger, hub *websocket.Hub, fileService *services.FileService, chatService *services.ChatService) *WSHandler {
+func NewWSHandler(logger *slog.Logger, hub *websocket.Hub, fileService *services.FileService, chatService *services.ChatService, assistantService *services.AssistantService) *WSHandler {
 	return &WSHandler{
-		logger:      logger,
-		hub:         hub,
-		fileService: fileService,
-		chatService: chatService,
+		logger:           logger,
+		hub:              hub,
+		fileService:      fileService,
+		chatService:      chatService,
+		assistantService: assistantService,
 	}
 }
 
@@ -84,6 +86,7 @@ func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 		dto.EventConversationArchive: h.ConversationArchive,
 		dto.EventConversationRename:  h.ConversationRename,
 		dto.EventConvrsationDelete:   h.ConversationDelete,
+		dto.EventAssistantPrompt:     h.AssistantPrompt,
 	}
 
 	if handler, ok := handlers[event.Type]; ok {
@@ -244,7 +247,7 @@ func (h *WSHandler) ConversationCreate(userID uint, event dto.WSEvent) {
 }
 
 func (h *WSHandler) ConversationArchive(userID uint, event dto.WSEvent) {
-	var payload dto.ConversationArhivePayload
+	var payload dto.ConversationArchivePayload
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		h.logger.Error("invalid conversation update payload", "error", err)
 		return
@@ -327,5 +330,17 @@ func (h *WSHandler) ConversationDelete(userID uint, event dto.WSEvent) {
 	if err != nil {
 		h.logger.Error("failed to delete conversation", "error", err)
 		return
+	}
+}
+
+func (h *WSHandler) AssistantPrompt(userID uint, event dto.WSEvent) {
+	var payload dto.PromptPayload
+	if err := json.Unmarshal(event.Payload, &payload); err != nil {
+		h.logger.Error("invalid assistant prompt payload", "error", err)
+		return
+	}
+
+	if err := h.assistantService.SendPrompt(userID, payload); err != nil {
+		h.logger.Error("failed to send prompt to assistant service", "error", err)
 	}
 }
