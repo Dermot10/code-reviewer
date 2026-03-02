@@ -27,6 +27,11 @@ func (s *AssistantService) SendPrompt(userID uint, payload dto.PromptPayload) er
 	// persist user msg, push to queue for worker
 	ctx := context.Background()
 
+	s.logger.Info("SendPrompt called",
+		"user_id", userID,
+		"conversation_id", payload.ConversationID,
+	)
+
 	msg := models.ChatMessage{
 		ConversationID: payload.ConversationID,
 		Role:           "user",
@@ -90,27 +95,39 @@ func (s *AssistantService) ListenForAssistantEvents(ctx context.Context) {
 
 	ch := pubsub.Channel()
 
-	for msg := range ch {
-		var event dto.AssistantTaskEvent
-		if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
-			s.logger.Error("invalid assistant event", "error", err)
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			s.logger.Info("stopping assistant listener")
+			return
 
-		switch event.Type {
-		case "assistant.chunk":
-			s.StreamResponse(event.UserID, event.ConversationID, event.Chunk, false)
+		case msg, ok := <-ch:
+			if !ok {
+				s.logger.Info("assistant pubsub channel closed")
+				return
+			}
 
-		case "assistant.completed":
-			finalMsg := models.ChatMessage{
-				ConversationID: event.ConversationID,
-				Role:           "assistant",
-				Content:        event.Content,
+			var event dto.AssistantTaskEvent
+			if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+				s.logger.Error("invalid assistant event", "error", err)
+				continue
 			}
-			if err := s.db.Create(&finalMsg).Error; err != nil {
-				s.logger.Error("failed to save assistant message", "error", err)
+
+			switch event.Type {
+			case "assistant.chunk":
+				s.StreamResponse(event.UserID, event.ConversationID, event.Chunk, false)
+
+			case "assistant.completed":
+				finalMsg := models.ChatMessage{
+					ConversationID: event.ConversationID,
+					Role:           "assistant",
+					Content:        event.Content,
+				}
+				if err := s.db.Create(&finalMsg).Error; err != nil {
+					s.logger.Error("failed to save assistant message", "error", err)
+				}
+				s.StreamResponse(event.UserID, event.ConversationID, event.Content, true)
 			}
-			s.StreamResponse(event.UserID, event.ConversationID, event.Content, true)
 		}
 	}
 }

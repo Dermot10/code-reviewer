@@ -54,7 +54,12 @@ func main() {
 	})
 
 	g.Go(func() error {
-		deps.reviewService.ListenForCompletions(ctx)
+		deps.reviewService.ListenForReviewCompletions(ctx)
+		return nil
+	})
+
+	g.Go(func() error {
+		deps.assistantService.ListenForAssistantEvents(ctx)
 		return nil
 	})
 

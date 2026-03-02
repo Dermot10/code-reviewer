@@ -92,7 +92,7 @@ func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, err
 	return enhancement, nil
 }
 
-func (s *ReviewService) ListenForCompletions(ctx context.Context) {
+func (s *ReviewService) ListenForReviewCompletions(ctx context.Context) {
 	pubsub := s.redis.Rdb.Subscribe(ctx, "review.completed")
 	defer pubsub.Close()
 
