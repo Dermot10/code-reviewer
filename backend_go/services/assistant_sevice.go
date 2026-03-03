@@ -43,6 +43,7 @@ func (s *AssistantService) SendPrompt(userID uint, payload dto.PromptPayload) er
 	}
 
 	task := dto.AssistantTask{
+		Type:           "assistant",
 		UserID:         userID,
 		ConversationID: payload.ConversationID,
 		Prompt:         payload.Prompt,

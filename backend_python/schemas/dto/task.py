@@ -18,4 +18,11 @@ class EnhancementTask(BaseModel):
     action: str = "enhance_code"
 
 
-Task = Union[ReviewTask, EnhancementTask]
+class ChatTask(BaseModel): 
+    type: Literal["assistant"]
+    user_id: int
+    conversation_id: int
+    prompt: str
+
+
+Task = Union[ReviewTask, EnhancementTask, ChatTask]

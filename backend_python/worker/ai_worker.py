@@ -5,7 +5,7 @@ import redis.asyncio as redis
 import asyncio
 from pydantic import TypeAdapter
 from backend_python.schemas.dto.task import Task
-from backend_python.worker.processor import process_review_task, process_enhance_task
+from backend_python.worker.processor import process_review_task, process_enhance_task, process_assistant_task
 from backend_python.logger import get_logger
 from dotenv import load_dotenv
 load_dotenv()
@@ -52,6 +52,20 @@ async def handle_task(task_dict):
 
             await r.set(result_key, json.dumps(result))
             await r.publish("enhancement.completed", json.dumps({"enhancement_id": task.enhancement_id}))
+
+        elif task.type == "assistant":
+
+            result = await process_assistant_task(task)
+            result_key = f"assistant:{task.conversation_id}:result"
+
+            await r.set(result_key, json.dumps(result))
+            await r.publish("assistant.events", json.dumps({
+                "type": "assistant.completed", 
+                "user_id": task.user_id, 
+                "conversation_id": task.conversation_id, 
+                "content": result
+            }))
+
         else:  
             logger.warning("Unknown task type", etxra={"task": task_dict})
             return 
@@ -74,7 +88,10 @@ async def worker_loop():
             item = await r.brpop(os.getenv("QUEUE_KEY"), timeout=5)
             if item: 
                 _, task_data = item
+
+                # spawn task to process streaming without blocking 
                 asyncio.create_task(handle_task(json.loads(task_data)))
+                
         except Exception as e:
             logger.exception("Error reading from Redis", exc_info=e)
             await asyncio.sleep(1)

@@ -107,38 +107,3 @@ type MessageCreatedPayload struct {
 	Content        string    `json:"content"`
 	CreatedAt      time.Time `json:"created_at"`
 }
-
-// internal - worker input
-type AssistantTask struct {
-	UserID         uint   `json:"user_id"`
-	ConversationID uint   `json:"conversation_id"`
-	Prompt         string `json:"prompt"`
-}
-
-// worker output
-type AssistantTaskEvent struct {
-	Type           string `json:"type"` //assistant.chunk | assistant.completed
-	UserID         uint   `json:"user_id"`
-	ConversationID uint   `json:"conversation_id"`
-	Chunk          string `json:"chunk,omitempty"`
-	Content        string `json:"content,omitempty"`
-}
-
-// deprcated ws support for reviews, may add again pending finalisation of design and more behavioural testing
-
-// type ReviewStartedPayload struct {
-// 	ReviewID uint   `json:"review_id"`
-// 	Status   string `json:"status"`
-// }
-
-// type ReviewCompletedPayload struct {
-// 	ReviewID uint   `json:"review_id"`
-// 	Status   string `json:"status"`
-// 	Result   string `json:"result"`
-// }
-
-// type ReviewFailedPayload struct {
-// 	ReviewID uint   `json:"review_id"`
-// 	Status   string `json:"status"`
-// 	Error    string `json:"error"`
-// }

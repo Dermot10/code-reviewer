@@ -44,6 +44,7 @@ func (r *RedisClient) GetCache(ctx context.Context, key string) (string, error) 
 func (r *RedisClient) DelKey(ctx context.Context, key string) error {
 	return r.Rdb.Del(ctx, key).Err()
 }
+
 func (r *RedisClient) PushQueue(ctx context.Context, data []byte) error {
 	return r.Rdb.LPush(ctx, QueuePrefix+"tasks", data).Err()
 }
