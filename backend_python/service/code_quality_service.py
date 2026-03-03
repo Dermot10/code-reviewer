@@ -4,7 +4,7 @@
 
 from typing import List, Dict
 from backend_python.logger import get_logger
-from backend_python.schemas.ai.code_context import CodeContext
+from backend_python.schemas.ai.review_context import CodeContext
 from backend_python.ai.ai_agents import handle_best_practices
 from backend_python.service.agent_service import agent_service, aggregate_python_output
 
