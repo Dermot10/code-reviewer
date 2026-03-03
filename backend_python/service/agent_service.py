@@ -2,8 +2,7 @@ from typing import List, Dict
 from fastapi import HTTPException
 from backend_python.logger import get_logger
 from backend_python.metrics import AGGREGATOR_ERRORS, AI_PROCESSING_TIME 
-from backend_python.schemas.ai.code_context import CodeContext
-from backend_python.schemas.ai.response_context import ResponseContext
+from backend_python.schemas.ai.review_context import CodeContext, ResponseContext
 
 
 logger = get_logger(__name__)

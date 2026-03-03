@@ -2,8 +2,7 @@ import os
 from typing import Type, Union
 from openai import OpenAI
 from dotenv import load_dotenv
-from backend_python.schemas.review.review_response import ReviewResponse
-from backend_python.schemas.review.best_practices import BestPracticesResponse
+from backend_python.schemas.ai.review_response import ReviewResponse, BestPracticesResponse
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 
 
