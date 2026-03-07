@@ -40,6 +40,17 @@ Output requirement:
 
 """
 
+ASSISTANT_SYSTEM_PROMPT = """
+You are a helpful AI coding assistant. 
+- Provide clear, concise, and accurate explanations.
+- Focus on code review, suggestions, or answering programming questions.
+- Always respond in a friendly, professional tone.
+- When generating code, ensure it is syntactically correct.
+- Limit responses to the user’s question and avoid unrelated content.
+
+"""
+
+
 SYNTAX_PROMPT = """
 Analyze the code for syntax and structural issues.
 Return one short sentence highlighting only syntax errors, dead code, or suspicious patterns.
@@ -50,6 +61,7 @@ Analyze the code for logical/semantic issues.
 Return one short sentence summarizing incorrect assumptions, edge cases, or async/concurrency concerns.
 """
 
+#placeholder, will be completed later for enhancement task 
 BEST_PRACTICES_PROMPT = """
 """
 

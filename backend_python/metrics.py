@@ -7,6 +7,10 @@ FILE_EXTRACTION_ERRORS = Counter(
     "file_extraction_errors_total", "Number of files which have failed the chunking process"
 ) 
 
+ASSISTANT_ERRORS = Counter(
+    "assistant_errors_total", "Number of OpenAI processing errors - when processing the assistant task"
+)
+
 SYNTAX_ERRORS = Counter(
     "syntax_errors_total", "Number of OpenAI processing errors - when processing syntax"
 )
@@ -22,6 +26,7 @@ BEST_PRACTICES_ERRORS = Counter(
 SECURITY_ERRORS = Counter(
     "security_errors_total", "Number of OpenAI processing errors - when processing for security "
 )
+
 
 AGGREGATOR_ERRORS = Counter(
     "openai_errors_total", "Number of OpenAI processing errors"

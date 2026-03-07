@@ -29,7 +29,7 @@ async def handle_task(task_dict):
         task = task_adapter.validate_python(task_dict)
         lock_key = f"{task.type}:{getattr(task, f'{task.type}_id')}:lock"
 
-        # if not exists set 
+        # idempotency lock for task
         if not await r.set(lock_key, "1", nx=True, ex=os.getenv("LOCK_EXPIRY")):
             logger.info("Task already in progress, skipping", extra={"task": task_dict})
             return
@@ -55,10 +55,21 @@ async def handle_task(task_dict):
 
         elif task.type == "assistant":
 
-            result = await process_assistant_task(task)
+            result = ""
             result_key = f"assistant:{task.conversation_id}:result"
 
-            await r.set(result_key, json.dumps(result))
+            async for chunk in process_assistant_task(task):
+                result += chunk
+
+                await r.publish("assistant.events", json.dumps({
+                    "type": "assistant.chunk", 
+                    "user_id": task.user_id,
+                    "conversation_id": task.conversation_id, 
+                    "chunk": chunk
+                }))
+
+            await r.set(result_key, result)
+
             await r.publish("assistant.events", json.dumps({
                 "type": "assistant.completed", 
                 "user_id": task.user_id, 

@@ -1,7 +1,9 @@
+from backend_python.ai.ai_review_agents import handle_assistant
 from backend_python.processing.postprocessing import postprocess_review, postprocess_enhanced
 from backend_python.processing.preprocessing import extract_chunks
 from backend_python.service.review_service import Execute_review
 from backend_python.service.code_quality_service import Execute_enhance
+from backend_python.service.assistant_service import Execute_assistant
 from backend_python.schemas.dto.task import Task
 import json
 
@@ -25,20 +27,9 @@ async def process_enhance_task(task: Task):
 
 
 
-async def process_assistant_task(task:Task): 
-    """Process a 'chat' type task"""
-    full_response = ""
-
-    async for chunk in stream_ai_model(task.prompt): 
-        full_response += chunk
-        
-
-        #publish individual chunk
-        await r.publish("assistant.events", json.dumps({
-            "type": "assistant.chunk", 
-            "user_id": task.user_id, 
-            "conversation_id": task.conversation_id, 
-            "chunk": chunk
-        }))
-
-    return full_response
+async def process_assistant_task(task: Task): 
+    """Process an 'assistant' type task, prompt is from DTO and system prompt is """
+    async for chunk in Execute_assistant(
+        prompt=task.prompt
+    ): 
+        yield chunk
