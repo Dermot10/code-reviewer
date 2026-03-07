@@ -20,6 +20,8 @@ async def stream_open_ai_call(system_prompt: str, prompt: str):
         stream=True
     )
 
+    # incremental text from model, generated in streaming event
+    # yielding data into memory for efficiency
     async for chunk in stream: 
         delta = chunk.choices[0].delta.content
         if delta: 
