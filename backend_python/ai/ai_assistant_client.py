@@ -1,14 +1,11 @@
 import os
-from typing import Type, Union
 from openai import AsyncOpenAI
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from backend_python.exceptions.exceptions import OpenAiProcessingError
 
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+load_dotenv(find_dotenv())
 
-
-client = AsyncOpenAI()
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def stream_open_ai_call(system_prompt: str, prompt: str):
     stream = await client.chat.completions.create(

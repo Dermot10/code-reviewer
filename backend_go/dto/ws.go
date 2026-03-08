@@ -27,7 +27,7 @@ const (
 	EventConversationRename  WSEventType = "conversation.rename"
 	EventConversationRenamed WSEventType = "conversation.renamed"
 
-	EventConvrsationDelete   WSEventType = "conversation.delete"
+	EventConversationDelete  WSEventType = "conversation.delete"
 	EventConversationDeleted WSEventType = "conversation.deleted"
 
 	EventMessageSend    WSEventType = "message.send"

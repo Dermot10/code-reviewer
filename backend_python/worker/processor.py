@@ -1,4 +1,3 @@
-from backend_python.ai.ai_review_agents import handle_assistant
 from backend_python.processing.postprocessing import postprocess_review, postprocess_enhanced
 from backend_python.processing.preprocessing import extract_chunks
 from backend_python.service.review_service import Execute_review

@@ -27,7 +27,6 @@ SECURITY_ERRORS = Counter(
     "security_errors_total", "Number of OpenAI processing errors - when processing for security "
 )
 
-
 AGGREGATOR_ERRORS = Counter(
     "openai_errors_total", "Number of OpenAI processing errors"
 )

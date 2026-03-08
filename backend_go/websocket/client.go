@@ -1,11 +1,9 @@
 package websocket
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 
-	"github.com/dermot10/code-reviewer/backend_go/dto"
 	gorilla_ws "github.com/gorilla/websocket"
 )
 
@@ -52,10 +50,8 @@ func (c *Client) ReadPump() {
 
 		log.Printf("received message from user %d: %s", c.UserID, message)
 
-		var event dto.WSEvent
-		if err := json.Unmarshal(message, &event); err != nil {
-			log.Println("invalid ws payload:", err)
-			continue
+		if c.OnMessage != nil {
+			c.OnMessage(c.UserID, message)
 		}
 
 		// return event

@@ -54,7 +54,13 @@ func (s *AssistantService) SendPrompt(userID uint, payload dto.PromptPayload) er
 		return err
 	}
 
-	return s.redis.PushQueue(ctx, data)
+	err = s.redis.PushQueue(ctx, data)
+	if err != nil {
+		s.logger.Error("failed to push assistant task to queue", "error", err)
+	} else {
+		s.logger.Info("assistant task pushed to queue", "conversation_id", payload.ConversationID, "user_id", userID)
+	}
+	return err
 }
 
 func (s *AssistantService) StreamResponse(userID, conversationID uint, chunk string, done bool) {

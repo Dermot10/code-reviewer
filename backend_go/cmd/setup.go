@@ -77,6 +77,8 @@ func setUpMigrations(db *gorm.DB) error {
 		&models.Review{},
 		&models.Enhancement{},
 		&models.File{},
+		&models.Conversation{},
+		&models.ChatMessage{},
 	); err != nil {
 		return fmt.Errorf("db migrate: %w", err)
 	}

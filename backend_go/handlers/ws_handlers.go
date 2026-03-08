@@ -78,6 +78,9 @@ func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 		return
 	}
 
+	h.logger.Info("routeEvent received", "type", string(event.Type))
+	h.logger.Info("raw event type received", "raw", string(event.Type))
+
 	handlers := map[dto.WSEventType]func(uint, dto.WSEvent){
 		dto.EventFileUpload:          h.FileUpload,
 		dto.EventFileUpdated:         h.FileUpdate,
@@ -85,7 +88,7 @@ func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 		dto.EventConversationCreate:  h.ConversationCreate,
 		dto.EventConversationArchive: h.ConversationArchive,
 		dto.EventConversationRename:  h.ConversationRename,
-		dto.EventConvrsationDelete:   h.ConversationDelete,
+		dto.EventConversationDelete:  h.ConversationDelete,
 		dto.EventAssistantPrompt:     h.AssistantPrompt,
 	}
 
@@ -93,6 +96,7 @@ func (h *WSHandler) routeEvent(userID uint, raw []byte) {
 		handler(userID, event)
 	} else {
 		h.logger.Warn("unknown event type", "type", event.Type)
+		h.AssistantPrompt(userID, event)
 	}
 }
 
@@ -334,6 +338,7 @@ func (h *WSHandler) ConversationDelete(userID uint, event dto.WSEvent) {
 }
 
 func (h *WSHandler) AssistantPrompt(userID uint, event dto.WSEvent) {
+	h.logger.Info("AssistantPrompt tirggered", "user_id", userID)
 	var payload dto.PromptPayload
 	if err := json.Unmarshal(event.Payload, &payload); err != nil {
 		h.logger.Error("invalid assistant prompt payload", "error", err)
@@ -343,4 +348,6 @@ func (h *WSHandler) AssistantPrompt(userID uint, event dto.WSEvent) {
 	if err := h.assistantService.SendPrompt(userID, payload); err != nil {
 		h.logger.Error("failed to send prompt to assistant service", "error", err)
 	}
+
+	h.logger.Info("SendPrompt called", "user_id", userID, "conversation_id", payload.ConversationID)
 }

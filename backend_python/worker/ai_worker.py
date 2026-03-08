@@ -20,69 +20,75 @@ stop_event = asyncio.Event()
 
 
 # TODO - 
-# deprecate handler logic, current purpose - sync testing
 # move export functionality to Go service
 
 
-async def handle_task(task_dict): 
-    try: 
+async def handle_task(task_dict):
+    try:
         task = task_adapter.validate_python(task_dict)
-        lock_key = f"{task.type}:{getattr(task, f'{task.type}_id')}:lock"
+
+        # map task types to their unique ID fields
+        id_field_map = {
+            "review": "review_id",
+            "enhance": "enhancement_id",
+            "assistant": "conversation_id"
+        }
+
+        task_id_field = id_field_map.get(task.type)
+        if not task_id_field:
+            logger.warning("Unknown task type for lock", extra={"task": task_dict})
+            return
+
+        task_id_value = getattr(task, task_id_field, None)
+        if task_id_value is None:
+            logger.warning("Task missing ID field", extra={"task": task_dict})
+            return
+
+        lock_key = f"{task.type}:{task_id_value}:lock"
 
         # idempotency lock for task
-        if not await r.set(lock_key, "1", nx=True, ex=os.getenv("LOCK_EXPIRY")):
+        if not await r.set(lock_key, "1", nx=True, ex=int(os.getenv("LOCK_EXPIRY", 30))):
             logger.info("Task already in progress, skipping", extra={"task": task_dict})
             return
-        
-        logger.info("Processing Task", extra={"task": task.type, "task_id": getattr(task, f"{task.type}_id")})
 
-        if task.type == "review": 
-            # ai agents
+        logger.info("Processing Task", extra={"task": task.type, "task_id": task_id_value})
+
+        if task.type == "review":
             result = await process_review_task(task)
             result_key = f"review:{task.review_id}:result"
-
-            # store in result in redis 
             await r.set(result_key, json.dumps(result))
             await r.publish("review.completed", json.dumps({"review_id": task.review_id}))
 
         elif task.type == "enhance":
-
             result = await process_enhance_task(task)
             result_key = f"enhancement:{task.enhancement_id}:result"
-
             await r.set(result_key, json.dumps(result))
             await r.publish("enhancement.completed", json.dumps({"enhancement_id": task.enhancement_id}))
 
         elif task.type == "assistant":
-
             result = ""
             result_key = f"assistant:{task.conversation_id}:result"
 
             async for chunk in process_assistant_task(task):
                 result += chunk
-
                 await r.publish("assistant.events", json.dumps({
-                    "type": "assistant.chunk", 
+                    "type": "assistant.chunk",
                     "user_id": task.user_id,
-                    "conversation_id": task.conversation_id, 
+                    "conversation_id": task.conversation_id,
                     "chunk": chunk
                 }))
 
             await r.set(result_key, result)
-
             await r.publish("assistant.events", json.dumps({
-                "type": "assistant.completed", 
-                "user_id": task.user_id, 
-                "conversation_id": task.conversation_id, 
+                "type": "assistant.completed",
+                "user_id": task.user_id,
+                "conversation_id": task.conversation_id,
                 "content": result
             }))
 
-        else:  
-            logger.warning("Unknown task type", etxra={"task": task_dict})
-            return 
+        logger.info("Task completed", extra={"task": task_dict})
 
-        logger.info("Task completed", extra={"task":task_dict})
-
+        # release lock
         await r.delete(lock_key)
 
     except Exception as e:
@@ -92,11 +98,12 @@ async def handle_task(task_dict):
 
 async def worker_loop(): 
     logger.info("Worker started, waiting for tasks...")
+    logger.info("Polling Redis key", extra={"key": os.getenv("QUEUE_KEY")})
 
     while not stop_event.is_set():
         try: 
             # block if empty, pop if available
-            item = await r.brpop(os.getenv("QUEUE_KEY"), timeout=5)
+            item = await r.brpop(QUEUE_KEY, timeout=5)
             if item: 
                 _, task_data = item
 
