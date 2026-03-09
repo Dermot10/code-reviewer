@@ -5,25 +5,41 @@ import redis.asyncio as redis
 import asyncio
 from pydantic import TypeAdapter
 from backend_python.schemas.dto.task import Task
-from backend_python.worker.processor import process_review_task, process_enhance_task, process_assistant_task
+from backend_python.worker.tasks import handle_assistant_task, handle_enhance_task, handle_review_task
 from backend_python.logger import get_logger
 from dotenv import load_dotenv
+
 load_dotenv()
 
-logger = get_logger("Ai-Worker")
+logger = get_logger("Worker")
 
-r = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), db=0, decode_responses=True)
+r = redis.Redis(
+    host=os.getenv("REDIS_HOST"),
+    port=os.getenv("REDIS_PORT"),
+    db=0,
+    decode_responses=True
+)
+
 QUEUE_KEY = "queue:tasks"
+SEMAPHORE = asyncio.Semaphore(10)
 task_adapter = TypeAdapter(Task)
-
 stop_event = asyncio.Event()
 
 
 # TODO - 
 # move export functionality to Go service
 
+async def run_task(task_data): 
+    """Semaphore wrapper to limit concurrent execution"""
+    async with SEMAPHORE: 
+        await handle_task(task_data)
+
 
 async def handle_task(task_dict):
+
+    task = None 
+    lock_key = None
+
     try:
         task = task_adapter.validate_python(task_dict)
 
@@ -35,70 +51,61 @@ async def handle_task(task_dict):
         }
 
         task_id_field = id_field_map.get(task.type)
+
         if not task_id_field:
             logger.warning("Unknown task type for lock", extra={"task": task_dict})
             return
 
         task_id_value = getattr(task, task_id_field, None)
+
         if task_id_value is None:
             logger.warning("Task missing ID field", extra={"task": task_dict})
             return
 
         lock_key = f"{task.type}:{task_id_value}:lock"
 
-        # idempotency lock for task
+        # idempotency lock
         if not await r.set(lock_key, "1", nx=True, ex=int(os.getenv("LOCK_EXPIRY", 30))):
             logger.info("Task already in progress, skipping", extra={"task": task_dict})
             return
 
-        logger.info("Processing Task", extra={"task": task.type, "task_id": task_id_value})
+        logger.info(
+            "Processing Task", 
+            extra={"task": task.type, "task_id": task_id_value}
+        )
 
         if task.type == "review":
-            result = await process_review_task(task)
-            result_key = f"review:{task.review_id}:result"
-            await r.set(result_key, json.dumps(result))
-            await r.publish("review.completed", json.dumps({"review_id": task.review_id}))
+            await handle_review_task(r, task)
 
         elif task.type == "enhance":
-            result = await process_enhance_task(task)
-            result_key = f"enhancement:{task.enhancement_id}:result"
-            await r.set(result_key, json.dumps(result))
-            await r.publish("enhancement.completed", json.dumps({"enhancement_id": task.enhancement_id}))
+            await handle_enhance_task(r, task)
 
         elif task.type == "assistant":
-            result = ""
-            result_key = f"assistant:{task.conversation_id}:result"
-
-            async for chunk in process_assistant_task(task):
-                result += chunk
-                await r.publish("assistant.events", json.dumps({
-                    "type": "assistant.chunk",
-                    "user_id": task.user_id,
-                    "conversation_id": task.conversation_id,
-                    "chunk": chunk
-                }))
-
-            await r.set(result_key, result)
-            await r.publish("assistant.events", json.dumps({
-                "type": "assistant.completed",
-                "user_id": task.user_id,
-                "conversation_id": task.conversation_id,
-                "content": result
-            }))
+            await handle_assistant_task(r, task)
 
         logger.info("Task completed", extra={"task": task_dict})
-
-        # release lock
-        await r.delete(lock_key)
+        
 
     except Exception as e:
         logger.exception("Failed to process task", exc_info=e)
 
+        if task and task.type == "assistant": 
+            await r.publish(
+                "assistant.events", json.dumps({ # encode json
+                "type": "assistant.failed", 
+                "payload": {
+                    "conversation_id": getattr(task, "conversation_id", None), 
+                    "error": str(e)
+                }
+            })
+        )
 
+    finally: 
+        if lock_key: 
+            await r.delete(lock_key)
 
 async def worker_loop(): 
-    logger.info("Worker started, waiting for tasks...")
-    logger.info("Polling Redis key", extra={"key": os.getenv("QUEUE_KEY")})
+    logger.info("Worker started", extra={"queue": QUEUE_KEY})
 
     while not stop_event.is_set():
         try: 
@@ -107,8 +114,11 @@ async def worker_loop():
             if item: 
                 _, task_data = item
 
-                # spawn task to process streaming without blocking 
-                asyncio.create_task(handle_task(json.loads(task_data)))
+                # deserialise/ decode json to python dict (str)
+                task_dict = json.loads(task_data)
+
+                # spawn controlled task 
+                asyncio.create_task(run_task(task_dict))
                 
         except Exception as e:
             logger.exception("Error reading from Redis", exc_info=e)
