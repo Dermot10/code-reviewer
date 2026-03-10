@@ -14,13 +14,17 @@ load_dotenv()
 logger = get_logger("Worker")
 
 r = redis.Redis(
-    host=os.getenv("REDIS_HOST"),
-    port=os.getenv("REDIS_PORT"),
+    host=os.getenv("REDIS_HOST", "localhost"),
+    port=int(os.getenv("REDIS_PORT", 6379)),
     db=0,
     decode_responses=True
 )
 
-QUEUE_KEY = "queue:tasks"
+
+QUEUE_KEY = os.getenv("QUEUE_KEY", "queue:tasks")
+LOCK_EXPIRY = int(os.getenv("LOCK_EXPIRY", 30))
+
+
 SEMAPHORE = asyncio.Semaphore(10)
 task_adapter = TypeAdapter(Task)
 stop_event = asyncio.Event()
