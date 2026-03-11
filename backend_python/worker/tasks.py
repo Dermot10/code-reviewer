@@ -12,18 +12,26 @@ FLUSH_INTERVAL = 0.1 # 100 ms
 
 async def handle_review_task(r, task: Task): 
     result = await process_review_task(task)
+
     result_key = f"review:{task.review_id}:result"
+
     await r.set(result_key, json.dumps(result))
+
     await r.publish("review.completed", json.dumps({"review_id": task.review_id}))
 
 
 async def handle_enhance_task(r, task: Task): 
     result = await process_enhance_task(task)
+
     result_key = f"enhancement:{task.enhancement_id}:result"
+
     await r.set(result_key, json.dumps(result))
+
     await r.publish("enhancement.completed", json.dumps({"enhancement_id": task.enhancement_id}))
 
+
 async def handle_assistant_task(r, task: Task): 
+
     result = ""
     buffer_chunks = []
     last_flush = asyncio.get_event_loop().time()
@@ -67,13 +75,13 @@ async def handle_assistant_task(r, task: Task):
             }))
 
 
-        await r.set(result_key, result)
+    await r.set(result_key, result)
 
-        await r.publish("assistant.events", json.dumps({
-            "type": "assistant.stream",
-            "payload": {
-                "conversation_id": task.conversation_id,
-                "chunk": result, 
-                "done": True
-            }
-        }))
+    await r.publish("assistant.events", json.dumps({
+        "type": "assistant.stream",
+        "payload": {
+            "conversation_id": task.conversation_id,
+            "chunk": result, 
+            "done": True
+        }
+    }))

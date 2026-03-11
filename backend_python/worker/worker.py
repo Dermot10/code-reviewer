@@ -43,6 +43,7 @@ async def handle_task(task_dict):
 
     task = None 
     lock_key = None
+    lock_acquired = False
 
     try:
         task = task_adapter.validate_python(task_dict)
@@ -67,6 +68,10 @@ async def handle_task(task_dict):
             return
 
         lock_key = f"{task.type}:{task_id_value}:lock"
+        
+        lock_acquired = await r.set(
+            lock_key, "1", nx=True, ex=int(os.getenv("LOCK_EXPIRY", 30))
+        )
 
         # idempotency lock
         if not await r.set(lock_key, "1", nx=True, ex=int(os.getenv("LOCK_EXPIRY", 30))):
@@ -105,7 +110,7 @@ async def handle_task(task_dict):
         )
 
     finally: 
-        if lock_key: 
+        if lock_acquired: 
             await r.delete(lock_key)
 
 async def worker_loop(): 
