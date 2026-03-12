@@ -1,6 +1,3 @@
-# service for both file and non-file handling, flag can be passed down to signify whether to download file
-# logging 
-# metrics 
 from typing import List, Dict
 from backend_python.logger import get_logger
 from backend_python.schemas.ai.review_context import CodeContext
@@ -17,10 +14,12 @@ async def Execute_review(chunked_code: List[CodeContext]) -> Dict[str, str]:
         logger.warning("failed to execute code review service", exc_info=e)
         raise 
 
+
 async def code_review_service(chunked_context: List[CodeContext]) -> Dict[str, str]:
     chain = [
         handle_syntax,
     ]
+    
     reviews = await agent_service(chain, chunked_context , aggregate_reviews)
     return reviews
 

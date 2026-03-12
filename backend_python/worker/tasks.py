@@ -1,9 +1,7 @@
-import asyncio
 import json
-
+import asyncio
 from backend_python.schemas.dto.task import Task
 from backend_python.worker.processor import process_review_task, process_enhance_task, process_assistant_task
-
 
 
 
@@ -33,7 +31,7 @@ async def handle_enhance_task(r, task: Task):
 async def handle_assistant_task(r, task: Task): 
 
     result = ""
-    buffer_chunks = []
+    buffer = []
     last_flush = asyncio.get_event_loop().time()
     
     result_key = f"assistant:{task.conversation_id}:result"
@@ -41,9 +39,9 @@ async def handle_assistant_task(r, task: Task):
 
     async for chunk in process_assistant_task(task):
         result += chunk
-        buffer_chunks.append(chunk)
-        buffer = "".join(buffer_chunks)
-
+        buffer.append(chunk)
+       
+        #check for deprecation, may require updating           
         now = asyncio.get_event_loop().time()
         
         # multi flush conditions for to ensure streaming -> UI stays performant
@@ -52,28 +50,41 @@ async def handle_assistant_task(r, task: Task):
             (now - last_flush) >= FLUSH_INTERVAL 
         )
 
-        if should_flush: 
-            await r.publish("assistant.events", json.dumps({
-                "type": "assistant.chunk",
-                "user_id": task.user_id,
-                "conversation_id": task.conversation_id,
-                "chunk": buffer
-            }))
+        if not should_flush: 
+            continue
+        
+        payload = "".join(buffer)
 
-        buffer_chunks.clear()
-        last_flush = now
-
-        # flush remaining buffer 
-        if buffer: 
-            await r.publish("assistant.events", json.dumps({
+        await r.publish(
+            "assistant.events",
+            json.dumps({
                 "type": "assistant.stream", 
                 "payload": {
                     "conversation_id": task.conversation_id, 
-                    "chunk": buffer,
+                    "chunk": payload,
                     "done": False
                 }
-            }))
+            })
+        )
 
+        buffer.clear()
+        last_flush = now
+    
+    # flush remaining buffer 
+    if buffer: 
+        payload = "".join(buffer)
+
+        await r.publish(
+            "assistant.events",
+            json.dumps({
+                "type": "assistant.stream",
+                "payload": {
+                    "conversation_id": task.conversation_id,
+                    "chunk": payload,
+                    "done": False
+                }
+            })
+        )
 
     await r.set(result_key, result)
 
@@ -83,5 +94,6 @@ async def handle_assistant_task(r, task: Task):
             "conversation_id": task.conversation_id,
             "chunk": result, 
             "done": True
-        }
-    }))
+            }
+        })
+    )

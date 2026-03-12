@@ -1,9 +1,5 @@
-from typing import List, Dict
-from fastapi import HTTPException
 from backend_python.logger import get_logger
 from backend_python.ai.ai_assistant_agents import handle_assistant
-from backend_python.schemas.ai.chat_context import ChatResponseContext
-
 
 logger = get_logger(__name__)
 

@@ -1,5 +1,4 @@
 import pytest
-import json
 from unittest.mock import AsyncMock, patch
 from backend_python.worker.worker import handle_task
 

@@ -1,6 +1,7 @@
 import pytest
+import json
 from unittest.mock import AsyncMock, patch
-from backend_python.worker.tasks import handle_review_task, handle_enhance_task, handle_assistant_task
+from backend_python.worker.tasks import BATCH_SIZE, handle_review_task, handle_enhance_task, handle_assistant_task
 
 
 @pytest.mark.asyncio
@@ -19,6 +20,7 @@ async def test_review_handler_sets_result_and_publishes():
     mock_redis.set.assert_called_once()
     mock_redis.publish.assert_called_once()
 
+    #first argument set is the key 
     key = mock_redis.set.call_args[0][0]
     assert key == "review:1:result"
 
@@ -69,26 +71,36 @@ async def test_assistant_stream_publishes_chunks():
     assert mock_redis.publish.called
 
 
-
 @pytest.mark.asyncio
-async def test_assistant_batches_chunks():
+async def test_assistant_batches_chunks_precise():
 
     mock_redis = AsyncMock()
 
-    task = type("Task", (), {
-        "conversation_id": 1, 
-        "user_id": 1
-    })()
-
-    async def fake_stream(_): 
-        for _ in range(10): 
-            yield "chunk"
+    task = type("Task", (), {"conversation_id": 1, "user_id": 1})()
     
+    # 1-char chunks yielded to sim stremaing 
+    async def fake_stream(_):
+        for _ in range(10):
+            yield "x"  
+
     with patch(
-        "backend_python.worker.tasks.process_assistant_task", 
+        "backend_python.worker.tasks.process_assistant_task",
         fake_stream
     ):
         await handle_assistant_task(mock_redis, task)
 
-    # should publish multiple times but not once per token
-    assert mock_redis.publish.call_count > 0
+    # gather all published payloads
+    published_payloads = [
+        json.loads(call.args[1])
+        for call in mock_redis.publish.call_args_list
+    ]
+
+    # Check batching logic, each payload has 'chunk' <= batch_size or final done=True
+    for payload in published_payloads[:-1]:  # skip final done=True
+        chunk = payload["payload"]["chunk"]
+        assert len(chunk) <= BATCH_SIZE
+
+    # Final done=True event, last payload contains full result which is published to redis (mock)
+    final_payload = published_payloads[-1]["payload"]
+    assert final_payload["done"] is True
+    assert final_payload["chunk"] == "x" * 10

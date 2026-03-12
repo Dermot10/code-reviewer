@@ -100,7 +100,7 @@ async def handle_task(task_dict):
 
         if task and task.type == "assistant": 
             await r.publish(
-                "assistant.events", json.dumps({ # encode json
+                "assistant.events", json.dumps({
                 "type": "assistant.failed", 
                 "payload": {
                     "conversation_id": getattr(task, "conversation_id", None), 
@@ -123,7 +123,7 @@ async def worker_loop():
             if item: 
                 _, task_data = item
 
-                # deserialise/ decode json to python dict (str)
+                # deserialise / decode json to python dict (str)
                 task_dict = json.loads(task_data)
 
                 # spawn controlled task 
