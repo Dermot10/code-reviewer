@@ -42,7 +42,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		return nil, err
 	}
 
-	r, err := redis.NewRedisService(cfg)
+	r, err := redis.NewRedisClient(cfg)
 	if err != nil {
 		return nil, err
 	}

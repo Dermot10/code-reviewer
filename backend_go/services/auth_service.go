@@ -34,7 +34,7 @@ func (s *AuthService) CreateUser(username, email, password string) (*dto.CreateU
 
 	hashedPwd, err := utils.HashedPassword(password)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	user := models.User{

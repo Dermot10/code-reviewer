@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/redis/go-redis/v9" // Redis client for service
 	"github.com/stretchr/testify/require"
 	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -37,6 +38,16 @@ func setUp(t *testing.T) (*gorm.DB, *redis.Client) {
 	pgConnStr, _ := pg.ConnectionString(ctx, "sslmode=disable")
 	db, err := gorm.Open(gormpostgres.Open(pgConnStr), &gorm.Config{})
 	require.NoError(t, err)
+
+	// Migrate DB table to testcontainer for test usage
+	db.AutoMigrate(
+		&models.User{},
+		&models.File{},
+		&models.Review{},
+		&models.Enhancement{},
+		&models.ChatMessage{},
+		&models.Conversation{},
+	)
 
 	// Connect Redis client to Redis container
 	addr, err := redisC.Endpoint(ctx, "")

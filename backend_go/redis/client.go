@@ -17,7 +17,8 @@ type RedisClient struct {
 	Rdb *redis.Client
 }
 
-func NewRedisService(cfg *config.Config) (*RedisClient, error) {
+func NewRedisClient(cfg *config.Config) (*RedisClient, error) {
+	// Prod client
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.RedisAddr,
 	})
@@ -26,6 +27,11 @@ func NewRedisService(cfg *config.Config) (*RedisClient, error) {
 	}
 	log.Print("Successfully connected to redis")
 	return &RedisClient{Rdb: rdb}, nil
+}
+
+func NewRedisClientFromClient(rdb *redis.Client) *RedisClient {
+	// Test client
+	return &RedisClient{Rdb: rdb}
 }
 
 func (r *RedisClient) Close() error {
