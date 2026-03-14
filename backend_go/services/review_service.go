@@ -47,6 +47,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal review task: %w", err)
 	}
+
 	if err := s.redis.PushQueue(ctx, data); err != nil {
 		return nil, fmt.Errorf("failed to push review task to queue: %w", err)
 	}
@@ -136,10 +137,11 @@ func (s *ReviewService) ListenForReviewCompletions(ctx context.Context) {
 			}
 
 			// Update database
-			if err := s.db.Model(&models.Review{}).Where("id = ?", reviewID).Updates(map[string]interface{}{
-				"status": "completed",
-				"result": resultData,
-			}).Error; err != nil {
+			if err := s.db.Model(&models.Review{}).Where("id = ?", reviewID).
+				Updates(map[string]interface{}{
+					"status": "completed",
+					"result": resultData,
+				}).Error; err != nil {
 				s.logger.Error("failed to update review", "review_id", reviewID, "error", err)
 				continue
 			}

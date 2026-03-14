@@ -12,24 +12,24 @@ import (
 )
 
 func TestReviewService_CreateReview_Listener(t *testing.T) {
-	db, rdb := setUp(t) // your Testcontainers setup
+	db, rdb := setUp(t)
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)
 	service := NewReviewService(db, rc, logger)
 
-	// 1️ Create a review
+	// Create a review
 	review, err := service.CreateReview(1, "print('hello')")
 	require.NoError(t, err)
 	require.Equal(t, "processing", review.Status)
 
-	// 2️Prepare listener
+	// Prepare listener
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	go service.ListenForReviewCompletions(ctx)
 
-	// 3️ Simulate completion event in Redis
+	// Simulate completion event in Redis
 	event := map[string]interface{}{
 		"type":      "review.completed",
 		"review_id": review.ID,
@@ -43,16 +43,16 @@ func TestReviewService_CreateReview_Listener(t *testing.T) {
 	// Publish completion event
 	require.NoError(t, rdb.Publish(ctx, "review.completed", eventJSON).Err())
 
-	// 4️ Wait for listener to process
+	// Wait for listener to process
 	time.Sleep(200 * time.Millisecond)
 
-	// 5️ Assert review updated in DB
+	// Assert review updated in DB
 	var updated models.Review
 	require.NoError(t, db.First(&updated, review.ID).Error)
 	require.Equal(t, "completed", updated.Status)
 	require.Equal(t, "review result", updated.Result)
 
-	// 6️ Assert Redis keys cleaned up
+	// Assert Redis keys cleaned up
 	_, err = rdb.Get(ctx, resultKey).Result()
 	require.Error(t, err) // should be deleted
 }

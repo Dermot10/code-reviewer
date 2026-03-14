@@ -8,7 +8,6 @@ import (
 )
 
 func TestFileService_CreateFile(t *testing.T) {
-
 	db, _ := setUp(t)
 
 	logger := newTestLogger()
@@ -28,7 +27,6 @@ func TestFileService_CreateFile(t *testing.T) {
 }
 
 func TestFileService_GetFile(t *testing.T) {
-
 	db, _ := setUp(t)
 
 	logger := newTestLogger()
@@ -49,7 +47,6 @@ func TestFileService_GetFile(t *testing.T) {
 }
 
 func TestFileService_UpdateFile(t *testing.T) {
-
 	db, _ := setUp(t)
 
 	logger := newTestLogger()
@@ -70,7 +67,6 @@ func TestFileService_UpdateFile(t *testing.T) {
 }
 
 func TestFileService_ListFiles(t *testing.T) {
-
 	db, _ := setUp(t)
 
 	logger := newTestLogger()
@@ -92,7 +88,6 @@ func TestFileService_ListFiles(t *testing.T) {
 }
 
 func TestFileService_DeleteFile(t *testing.T) {
-
 	db, _ := setUp(t)
 
 	logger := newTestLogger()

@@ -74,6 +74,10 @@ func (h *Hub) Run(ctx context.Context) {
 			clients := h.clients[message.UserID]
 			h.mu.RUnlock()
 
+			if clients == nil {
+				continue
+			}
+
 			for client := range clients {
 				select {
 				case client.Send <- message.Data:

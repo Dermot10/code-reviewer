@@ -27,13 +27,15 @@ func (f *FileService) CreateFile(userID uint, name, content string) (*models.Fil
 	if err := f.db.Create(file).Error; err != nil {
 		return nil, fmt.Errorf("failed to create file: %w", err)
 	}
+
 	return file, nil
 }
 
 func (f *FileService) UpdateFile(userID, fileID uint, content string) (*models.File, error) {
 	var file models.File
 
-	if err := f.db.Where("id = ? AND user_id  = ?", fileID, userID).First(&file).Error; err != nil {
+	if err := f.db.Where("id = ? AND user_id  = ?", fileID, userID).
+		First(&file).Error; err != nil {
 		return nil, fmt.Errorf("file not found: %w", err)
 	}
 
@@ -41,12 +43,15 @@ func (f *FileService) UpdateFile(userID, fileID uint, content string) (*models.F
 	if err := f.db.Save(&file).Error; err != nil {
 		return nil, fmt.Errorf("faield to update file; %w", err)
 	}
+
 	return &file, nil
 }
 
 func (f *FileService) GetFile(userID, fileID uint) (*models.File, error) {
 	var file models.File
-	if err := f.db.Where("id = ? AND user_id = ?", fileID, userID).First(&file).Error; err != nil {
+
+	if err := f.db.Where("id = ? AND user_id = ?", fileID, userID).
+		First(&file).Error; err != nil {
 		return nil, fmt.Errorf("file not found: %w", err)
 	}
 
@@ -56,19 +61,25 @@ func (f *FileService) GetFile(userID, fileID uint) (*models.File, error) {
 func (f *FileService) ListFiles(userID uint) ([]models.File, error) {
 	// return empty slice if null to be marshalled
 	files := []models.File{}
-	if err := f.db.Where("user_id = ?", userID).Find(&files).Error; err != nil {
+
+	if err := f.db.Where("user_id = ?", userID).
+		Find(&files).Error; err != nil {
 		return nil, fmt.Errorf("failed to list files: %w", err)
 	}
+
 	return files, nil
 }
 
 func (f *FileService) DeleteFile(userID, fileID uint) error {
 	result := f.db.Where("id = ? AND user_id = ?", fileID, userID).Delete(&models.File{})
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to delete file: %w", result.Error)
 	}
+
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("file not found")
 	}
+
 	return nil
 }

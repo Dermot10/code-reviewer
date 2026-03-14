@@ -23,7 +23,7 @@ type Client struct {
 	OnMessage func(userID uint, message []byte)
 }
 
-// reads msgs from ws connection
+// reads incoming msgs from ws connection (browser)
 // run in own goroutine
 func (c *Client) ReadPump() {
 	defer func() {

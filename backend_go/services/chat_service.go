@@ -44,7 +44,6 @@ func (s *ChatService) ListConversations(userID uint) ([]models.Conversation, err
 }
 
 func (s *ChatService) CreateMessage(userID, conversationID uint, role, content string) (*models.ChatMessage, error) {
-
 	var conv models.Conversation
 	if err := s.db.Where("id = ? AND user_id = ?", conversationID, userID).
 		First(&conv).Error; err != nil {
@@ -64,9 +63,9 @@ func (s *ChatService) CreateMessage(userID, conversationID uint, role, content s
 }
 
 func (s *ChatService) ListMessages(userID, conversationID uint, limit, offset int) ([]models.ChatMessage, error) {
-
 	var conv models.Conversation
-	if err := s.db.Where("id = ? AND user_id = ?", conversationID, userID).First(&conv).Error; err != nil {
+	if err := s.db.Where("id = ? AND user_id = ?", conversationID, userID).
+		First(&conv).Error; err != nil {
 		return nil, fmt.Errorf("conversation not found")
 	}
 

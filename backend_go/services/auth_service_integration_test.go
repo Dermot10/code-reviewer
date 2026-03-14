@@ -25,16 +25,16 @@ func TestAuthService_CreateUser(t *testing.T) {
 
 	service := NewAuthService(db, rc, logger, "testsecret")
 
-	resp, err := service.CreateUser("alice", "alice@test.com", "password")
+	resp, err := service.CreateUser("Roxas", "roxas@test.com", "password")
 
 	require.NoError(t, err)
-	require.Equal(t, "alice", resp.Username)
+	require.Equal(t, "Roxas", resp.Username)
 
 	var user models.User
 	err = db.First(&user, resp.ID).Error
 
 	require.NoError(t, err)
-	require.Equal(t, "alice@test.com", user.Email)
+	require.Equal(t, "roxas@test.com", user.Email)
 }
 
 func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
@@ -47,8 +47,8 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	service := NewAuthService(db, rc, logger, "testsecret")
 
 	user := models.User{
-		Username:       "bob",
-		Email:          "bob@test.com",
+		Username:       "Sora",
+		Email:          "sora@test.com",
 		HashedPassword: "hash",
 	}
 
@@ -57,7 +57,7 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	// first call (cache miss)
 	resp, err := service.GetUser(int(user.ID))
 	require.NoError(t, err)
-	require.Equal(t, "bob", resp.Username)
+	require.Equal(t, "sora", resp.Username)
 
 	// ensure cached
 	key := "user:" + string(rune(user.ID)) + ":profile"
@@ -68,7 +68,7 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	var cached map[string]interface{}
 	require.NoError(t, json.Unmarshal([]byte(val), &cached))
 
-	require.Equal(t, "bob", cached["Username"])
+	require.Equal(t, "sora", cached["Username"])
 }
 
 func TestAuthService_Login(t *testing.T) {
@@ -80,15 +80,15 @@ func TestAuthService_Login(t *testing.T) {
 
 	service := NewAuthService(db, rc, logger, "testsecret")
 
-	resp, err := service.CreateUser("carol", "carol@test.com", "password")
+	resp, err := service.CreateUser("axel", "axel@test.com", "password")
 	require.NoError(t, err)
 
-	token, err := service.Login("carol@test.com", "password")
+	token, err := service.Login("axel@test.com", "password")
 
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
-	require.Equal(t, resp.Email, "carol@test.com")
+	require.Equal(t, resp.Email, "axel@test.com")
 }
 
 func TestAuthService_Logout(t *testing.T) {
