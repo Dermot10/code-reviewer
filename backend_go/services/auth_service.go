@@ -56,7 +56,7 @@ func (s *AuthService) CreateUser(username, email, password string) (*dto.CreateU
 	return resp, nil
 }
 
-func (s *AuthService) GetUser(userID int) (*dto.UserResponse, error) {
+func (s *AuthService) GetUser(userID uint) (*dto.UserResponse, error) {
 	ctx := context.Background()
 
 	cacheKey := fmt.Sprintf("user:%d:profile", userID)

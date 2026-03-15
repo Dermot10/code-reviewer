@@ -55,7 +55,7 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	require.NoError(t, db.Create(&user).Error)
 
 	// first call (cache miss)
-	resp, err := service.GetUser(int(user.ID))
+	resp, err := service.GetUser(user.ID)
 	require.NoError(t, err)
 	require.Equal(t, "sora", resp.Username)
 

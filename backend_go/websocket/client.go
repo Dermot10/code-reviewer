@@ -24,6 +24,7 @@ type Client struct {
 }
 
 // reads incoming msgs from ws connection (browser)
+// reads directly from the connection (conn)
 // run in own goroutine
 func (c *Client) ReadPump() {
 	defer func() {
@@ -33,7 +34,7 @@ func (c *Client) ReadPump() {
 
 	// heartbeat mechanism, periodically checks
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetReadLimit(maxMessageSize)
+	c.Conn.SetReadLimit(maxMessageSize) 
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil

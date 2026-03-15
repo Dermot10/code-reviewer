@@ -7,7 +7,6 @@ import (
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
-	"github.com/dermot10/code-reviewer/backend_go/services"
 )
 
 // auth handlers for sign up, sign in
@@ -18,10 +17,17 @@ import (
 
 type AuthHandler struct {
 	logger      *slog.Logger
-	authService *services.AuthService
+	authService AuthService
 }
 
-func NewAuthHandler(logger *slog.Logger, authService *services.AuthService) *AuthHandler {
+type AuthService interface {
+	CreateUser(username, email, password string) (*dto.CreateUserResponse, error)
+	GetUser(userID uint) (*dto.UserResponse, error)
+	Login(email, password string) (string, error)
+	Logout(userID int) error
+}
+
+func NewAuthHandler(logger *slog.Logger, authService AuthService) *AuthHandler {
 	return &AuthHandler{
 		logger:      logger,
 		authService: authService,
@@ -49,7 +55,7 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
-	resp, err := h.authService.GetUser(int(userID))
+	resp, err := h.authService.GetUser(userID)
 	if err != nil {
 		http.Error(w, "failed to get the user", http.StatusInternalServerError)
 		return
