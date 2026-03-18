@@ -80,10 +80,10 @@ func TestAuthService_Login(t *testing.T) {
 
 	service := NewAuthService(db, rc, logger, "testsecret")
 
-	resp, err := service.CreateUser("axel", "axel@test.com", "password")
+	resp, err := service.CreateUser("axel", "axel@test.com", "chakrams")
 	require.NoError(t, err)
 
-	token, err := service.Login("axel@test.com", "password")
+	token, err := service.Login("axel@test.com", "chakrams")
 
 	require.NoError(t, err)
 	require.NotEmpty(t, token)

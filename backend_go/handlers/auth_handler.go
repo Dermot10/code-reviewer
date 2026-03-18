@@ -53,7 +53,11 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "unathorized", http.StatusUnauthorized)
+		return
+	}
 
 	resp, err := h.authService.GetUser(userID)
 	if err != nil {
@@ -94,7 +98,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "unathorized", http.StatusUnauthorized)
+		return
+	}
 
 	if err := h.authService.Logout(int(userID)); err != nil {
 		http.Error(w, "logout failed", http.StatusInternalServerError)
