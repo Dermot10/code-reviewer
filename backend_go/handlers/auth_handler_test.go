@@ -156,7 +156,7 @@ func TestAuthHandler_GetUser_NoContext(t *testing.T) {
 
 	handler.GetUser(w, req)
 	res := w.Result()
-	if res.StatusCode != http.StatusInternalServerError {
+	if res.StatusCode != http.StatusUnauthorized {
 		t.Errorf("expected 401, got %d", w.Result().StatusCode)
 	}
 }

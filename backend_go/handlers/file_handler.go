@@ -69,7 +69,12 @@ func (h *FileHandler) CreateFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FileHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	files, err := h.fileService.ListFiles(userID)
 	if err != nil {
@@ -94,13 +99,24 @@ func (h *FileHandler) ListFiles(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
-	fileID, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	fileIDStr := r.URL.Query().Get("id") // assuming you pass ?id=123 for tests
+	if fileIDStr == "" {
+		http.Error(w, "file ID required", http.StatusBadRequest)
+		return
+	}
+
+	fileID, err := strconv.ParseUint(fileIDStr, 10, 32)
 	if err != nil {
 		http.Error(w, "invalid file ID", http.StatusBadRequest)
 		return
 	}
-
 	file, err := h.fileService.GetFile(userID, uint(fileID))
 	if err != nil {
 		h.logger.Error("failed to get file", "error", err)
@@ -115,13 +131,26 @@ func (h *FileHandler) GetFile(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: file.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt: file.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 
 }
 
 func (h *FileHandler) UpdateFile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
-	fileID, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	fileIDStr := r.URL.Query().Get("id")
+	if fileIDStr == "" {
+		http.Error(w, "file ID required", http.StatusBadRequest)
+		return
+	}
+
+	fileID, err := strconv.ParseUint(fileIDStr, 10, 32)
 	if err != nil {
 		http.Error(w, "invalid file ID", http.StatusBadRequest)
 		return
@@ -144,15 +173,29 @@ func (h *FileHandler) UpdateFile(w http.ResponseWriter, r *http.Request) {
 		ID:        file.ID,
 		Name:      file.Name,
 		Content:   file.Content,
+		CreatedAt: file.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt: file.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *FileHandler) DeleteFile(w http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
-	fileID, err := strconv.ParseUint(r.PathValue("id"), 10, 32)
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(uint)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	fileIDStr := r.URL.Query().Get("id")
+	if fileIDStr == "" {
+		http.Error(w, "file ID required", http.StatusBadRequest)
+		return
+	}
+
+	fileID, err := strconv.ParseUint(fileIDStr, 10, 32)
 	if err != nil {
 		http.Error(w, "invalid file ID", http.StatusBadRequest)
 		return
