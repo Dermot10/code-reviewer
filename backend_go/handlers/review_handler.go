@@ -11,23 +11,17 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
 	"github.com/dermot10/code-reviewer/backend_go/models"
-	"github.com/dermot10/code-reviewer/backend_go/redis"
 	"github.com/dermot10/code-reviewer/backend_go/services"
-	"gorm.io/gorm"
 )
 
 type CodeReviewHandler struct {
 	logger        *slog.Logger
-	db            *gorm.DB
-	redis         *redis.RedisClient
 	reviewService *services.ReviewService
 }
 
-func NewCodeReviewHandler(logger *slog.Logger, db *gorm.DB, redis *redis.RedisClient, reviewService *services.ReviewService) *CodeReviewHandler {
+func NewCodeReviewHandler(logger *slog.Logger, reviewService *services.ReviewService) *CodeReviewHandler {
 	return &CodeReviewHandler{
 		logger:        logger,
-		db:            db,
-		redis:         redis,
 		reviewService: reviewService,
 	}
 }
@@ -134,7 +128,7 @@ func (h *CodeReviewHandler) GetReview(w http.ResponseWriter, r *http.Request) {
 
 	userID := r.Context().Value(middleware.UserIDKey).(uint)
 
-	if err := h.db.
+	if err := h.reviewService.DB.
 		Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
 		http.Error(w, "review not found", http.StatusNotFound)
 		return

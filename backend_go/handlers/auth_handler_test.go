@@ -13,6 +13,7 @@ import (
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
+	"github.com/dermot10/code-reviewer/backend_go/models"
 )
 
 type mockAuthService struct{}
@@ -28,16 +29,16 @@ func newTestAuthHandler() *AuthHandler {
 	return NewAuthHandler(logger, mockService)
 }
 
-func (m *mockAuthService) CreateUser(username, email, password string) (*dto.CreateUserResponse, error) {
-	return &dto.CreateUserResponse{
+func (m *mockAuthService) CreateUser(username, email, password string) (*models.User, error) {
+	return &models.User{
 		ID:       1,
 		Username: username,
 		Email:    email,
 	}, nil
 }
 
-func (m *mockAuthService) GetUser(userID uint) (*dto.UserResponse, error) {
-	return &dto.UserResponse{
+func (m *mockAuthService) GetUser(userID uint) (*models.User, error) {
+	return &models.User{
 		ID:       userID,
 		Username: "Marth",
 		Email:    "marth@test.com",
@@ -55,11 +56,11 @@ func (m *mockAuthService) Logout(userID int) error {
 	return nil
 }
 
-func (f *failingAuthService) CreateUser(username, email, password string) (*dto.CreateUserResponse, error) {
+func (f *failingAuthService) CreateUser(username, email, password string) (*models.User, error) {
 	return nil, fmt.Errorf("service failure")
 }
 
-func (f *failingAuthService) GetUser(userID uint) (*dto.UserResponse, error) {
+func (f *failingAuthService) GetUser(userID uint) (*models.User, error) {
 	return nil, fmt.Errorf("service failure")
 }
 

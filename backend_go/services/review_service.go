@@ -13,13 +13,13 @@ import (
 )
 
 type ReviewService struct {
-	db     *gorm.DB
+	DB     *gorm.DB
 	redis  *redis.RedisClient
 	logger *slog.Logger
 }
 
 func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger) *ReviewService {
-	return &ReviewService{db: db, redis: redis, logger: logger}
+	return &ReviewService{DB: db, redis: redis, logger: logger}
 }
 
 func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, error) {
@@ -31,7 +31,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 		Status: "pending",
 	}
 
-	if err := s.db.Create(review).Error; err != nil {
+	if err := s.DB.Create(review).Error; err != nil {
 		return nil, fmt.Errorf("failed to create review: %w", err)
 	}
 
@@ -52,7 +52,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 		return nil, fmt.Errorf("failed to push review task to queue: %w", err)
 	}
 
-	if err := s.db.Model(review).Update("status", "processing").Error; err != nil {
+	if err := s.DB.Model(review).Update("status", "processing").Error; err != nil {
 		return nil, err
 	}
 
@@ -67,7 +67,7 @@ func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, err
 		Status: "pending",
 	}
 
-	if err := s.db.Create(enhancement).Error; err != nil {
+	if err := s.DB.Create(enhancement).Error; err != nil {
 		return nil, fmt.Errorf("failed to create enhancement: %w", err)
 	}
 
@@ -86,7 +86,7 @@ func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, err
 		return nil, fmt.Errorf("failed to push enhancement task to queue: %w", err)
 	}
 
-	if err := s.db.Model(enhancement).Update("status", "processing").Error; err != nil {
+	if err := s.DB.Model(enhancement).Update("status", "processing").Error; err != nil {
 		return nil, err
 	}
 
@@ -131,13 +131,13 @@ func (s *ReviewService) ListenForReviewCompletions(ctx context.Context) {
 
 			// get review for notification, minimal overhead
 			var review models.Review
-			if err := s.db.First(&review, reviewID).Error; err != nil {
+			if err := s.DB.First(&review, reviewID).Error; err != nil {
 				s.logger.Error("failed to get review", "review_id", reviewID, "error", err)
 				continue
 			}
 
 			// Update database
-			if err := s.db.Model(&models.Review{}).Where("id = ?", reviewID).
+			if err := s.DB.Model(&models.Review{}).Where("id = ?", reviewID).
 				Updates(map[string]interface{}{
 					"status": "completed",
 					"result": resultData,

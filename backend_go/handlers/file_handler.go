@@ -8,20 +8,25 @@ import (
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
-	"github.com/dermot10/code-reviewer/backend_go/services"
-	"gorm.io/gorm"
+	"github.com/dermot10/code-reviewer/backend_go/models"
 )
 
 type FileHandler struct {
 	logger      *slog.Logger
-	db          *gorm.DB
-	fileService *services.FileService
+	fileService FileService
 }
 
-func NewFileHandler(logger *slog.Logger, db *gorm.DB, fileService *services.FileService) *FileHandler {
+type FileService interface {
+	CreateFile(userID uint, name, content string) (*models.File, error)
+	ListFiles(userID uint) ([]models.File, error)
+	GetFile(userID, fileID uint) (*models.File, error)
+	UpdateFile(userID, fileID uint, content string) (*models.File, error)
+	DeleteFile(userID, fileID uint) error
+}
+
+func NewFileHandler(logger *slog.Logger, fileService FileService) *FileHandler {
 	return &FileHandler{
 		logger:      logger,
-		db:          db,
 		fileService: fileService,
 	}
 }

@@ -87,10 +87,10 @@ func setUpMigrations(db *gorm.DB) error {
 
 func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 
-	codeReviewHandler := handlers.NewCodeReviewHandler(logger, deps.db, deps.redis, deps.reviewService)
+	codeReviewHandler := handlers.NewCodeReviewHandler(logger, deps.reviewService)
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
-	fileHandler := handlers.NewFileHandler(logger, deps.db, deps.fileService)
+	fileHandler := handlers.NewFileHandler(logger, deps.fileService)
 	wsHandler := handlers.NewWSHandler(logger, deps.wsHub, deps.fileService, deps.chatService, deps.assistantService)
 	// metricsHandler := handlers.NewMetricsHandler(logger, db, redis)
 

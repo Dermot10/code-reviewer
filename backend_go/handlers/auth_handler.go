@@ -7,6 +7,7 @@ import (
 
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
+	"github.com/dermot10/code-reviewer/backend_go/models"
 )
 
 // auth handlers for sign up, sign in
@@ -21,8 +22,8 @@ type AuthHandler struct {
 }
 
 type AuthService interface {
-	CreateUser(username, email, password string) (*dto.CreateUserResponse, error)
-	GetUser(userID uint) (*dto.UserResponse, error)
+	CreateUser(username, email, password string) (*models.User, error)
+	GetUser(userID uint) (*models.User, error)
 	Login(email, password string) (string, error)
 	Logout(userID int) error
 }
@@ -42,10 +43,16 @@ func (h *AuthHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := h.authService.CreateUser(req.Username, req.Email, req.Password)
+	user, err := h.authService.CreateUser(req.Username, req.Email, req.Password)
 	if err != nil {
 		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
+	}
+
+	resp := dto.CreateUserResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
 	}
 
 	w.WriteHeader(http.StatusCreated)
