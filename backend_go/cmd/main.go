@@ -54,7 +54,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		deps.reviewService.ListenForReviewCompletions(ctx)
+		deps.codeService.ListenForCodeCompletions(ctx)
 		return nil
 	})
 

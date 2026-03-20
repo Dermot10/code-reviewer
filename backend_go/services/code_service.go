@@ -12,17 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type ReviewService struct {
+type CodeService struct {
 	DB     *gorm.DB
 	redis  *redis.RedisClient
 	logger *slog.Logger
 }
 
-func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger) *ReviewService {
-	return &ReviewService{DB: db, redis: redis, logger: logger}
+func NewReviewService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Logger) *CodeService {
+	return &CodeService{DB: db, redis: redis, logger: logger}
 }
 
-func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, error) {
+func (s *CodeService) CreateReview(userID uint, code string) (*models.Review, error) {
 	ctx := context.Background()
 
 	review := &models.Review{
@@ -59,7 +59,7 @@ func (s *ReviewService) CreateReview(userID uint, code string) (*models.Review, 
 	return review, nil
 }
 
-func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, error) {
+func (s *CodeService) CreateEnhancement(userID uint) (*models.Enhancement, error) {
 	ctx := context.Background()
 
 	enhancement := &models.Enhancement{
@@ -93,7 +93,17 @@ func (s *ReviewService) CreateEnhancement(userID uint) (*models.Enhancement, err
 	return enhancement, nil
 }
 
-func (s *ReviewService) ListenForReviewCompletions(ctx context.Context) {
+func (s *CodeService) GetReview(userID uint, reviewID string) (*models.Review, error) {
+	var review models.Review
+
+	if err := s.DB.
+		Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
+		return nil, err
+	}
+	return &review, nil
+}
+
+func (s *CodeService) ListenForCodeCompletions(ctx context.Context) {
 	pubsub := s.redis.Rdb.Subscribe(ctx, "review.completed")
 	defer pubsub.Close()
 

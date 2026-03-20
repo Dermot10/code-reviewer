@@ -27,7 +27,7 @@ func TestReviewService_CreateReview_Listener(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
-	go service.ListenForReviewCompletions(ctx)
+	go service.ListenForCodeCompletions(ctx)
 
 	// Simulate completion event in Redis
 	event := map[string]interface{}{

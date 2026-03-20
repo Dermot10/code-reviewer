@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,18 +12,24 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/dto"
 	"github.com/dermot10/code-reviewer/backend_go/middleware"
 	"github.com/dermot10/code-reviewer/backend_go/models"
-	"github.com/dermot10/code-reviewer/backend_go/services"
 )
 
 type CodeReviewHandler struct {
-	logger        *slog.Logger
-	reviewService *services.ReviewService
+	logger      *slog.Logger
+	codeService CodeService
 }
 
-func NewCodeReviewHandler(logger *slog.Logger, reviewService *services.ReviewService) *CodeReviewHandler {
+type CodeService interface {
+	CreateReview(userID uint, code string) (*models.Review, error)
+	CreateEnhancement(userID uint) (*models.Enhancement, error)
+	GetReview(userID uint, reviewID string) (*models.Review, error)
+	ListenForCodeCompletions(ctx context.Context)
+}
+
+func NewCodeHandler(logger *slog.Logger, codeService CodeService) *CodeReviewHandler {
 	return &CodeReviewHandler{
-		logger:        logger,
-		reviewService: reviewService,
+		logger:      logger,
+		codeService: codeService,
 	}
 }
 
@@ -45,7 +52,7 @@ func (h *CodeReviewHandler) ReviewCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	review, err := h.reviewService.CreateReview(userID, requestCode.Code)
+	review, err := h.codeService.CreateReview(userID, requestCode.Code)
 	if err != nil {
 		http.Error(w, "failed to create review", http.StatusInternalServerError)
 		return
@@ -78,7 +85,7 @@ func (h *CodeReviewHandler) EnhanceCode(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	enhancement, err := h.reviewService.CreateEnhancement(userID)
+	enhancement, err := h.codeService.CreateEnhancement(userID)
 	if err != nil {
 		http.Error(w, "failed to create enhancement", http.StatusInternalServerError)
 		return
@@ -124,12 +131,16 @@ func (h *CodeReviewHandler) ExportReview(w http.ResponseWriter, r *http.Request)
 func (h *CodeReviewHandler) GetReview(w http.ResponseWriter, r *http.Request) {
 	reviewID := r.PathValue("id")
 
-	var review models.Review
+	// presence check for the userID
+	userID, ok := r.Context().Value(middleware.UserIDKey).(uint)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-	userID := r.Context().Value(middleware.UserIDKey).(uint)
-
-	if err := h.reviewService.DB.
-		Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
+	// ensures any nil review returns early
+	review, err := h.codeService.GetReview(userID, reviewID)
+	if err != nil || review == nil {
 		http.Error(w, "review not found", http.StatusNotFound)
 		return
 	}

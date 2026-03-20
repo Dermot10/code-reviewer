@@ -26,7 +26,7 @@ type Dependencies struct {
 	wsHub            *websocket.Hub
 	mux              *http.ServeMux
 	authService      *services.AuthService
-	reviewService    *services.ReviewService
+	codeService      *services.CodeService
 	fileService      *services.FileService
 	chatService      *services.ChatService
 	assistantService *services.AssistantService
@@ -53,7 +53,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	authService := services.NewAuthService(db, r, logger, cfg.JWTSecret)
-	reviewService := services.NewReviewService(db, r, logger)
+	codeService := services.NewReviewService(db, r, logger)
 	fileService := services.NewFileService(db, logger)
 	chatService := services.NewChatService(db, logger)
 	assistantService := services.NewAssistantService(db, r, logger, wsHub)
@@ -64,7 +64,7 @@ func setUpDependencies(ctx context.Context, cfg *config.Config) (*Dependencies, 
 		wsHub:            wsHub,
 		mux:              mux,
 		authService:      authService,
-		reviewService:    reviewService,
+		codeService:      codeService,
 		fileService:      fileService,
 		chatService:      chatService,
 		assistantService: assistantService,
@@ -87,7 +87,7 @@ func setUpMigrations(db *gorm.DB) error {
 
 func registerRoutes(logger *slog.Logger, deps *Dependencies, jwtSecret string) {
 
-	codeReviewHandler := handlers.NewCodeReviewHandler(logger, deps.reviewService)
+	codeReviewHandler := handlers.NewCodeHandler(logger, deps.codeService)
 	authReviewHandler := handlers.NewAuthHandler(logger, deps.authService)
 	healthHandler := handlers.NewHealthHandler(logger, deps.db, deps.redis)
 	fileHandler := handlers.NewFileHandler(logger, deps.fileService)
