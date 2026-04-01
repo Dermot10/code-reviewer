@@ -7,8 +7,10 @@ import (
 	"github.com/dermot10/code-reviewer/backend_go/models"
 	"github.com/redis/go-redis/v9" // Redis client for service
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 	postgrescontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 	rediscontainer "github.com/testcontainers/testcontainers-go/modules/redis"
+	"github.com/testcontainers/testcontainers-go/wait"
 	gormpostgres "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -22,10 +24,18 @@ func setUp(t *testing.T) (*gorm.DB, *redis.Client) {
 		postgrescontainer.WithDatabase("testdb"),
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("test"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections"),
+		),
 	)
 	require.NoError(t, err)
 
-	redisC, err := rediscontainer.Run(ctx, "redis:7")
+	redisC, err := rediscontainer.Run(ctx,
+		"redis:7",
+		testcontainers.WithWaitStrategy(
+			wait.ForListeningPort("6379/tcp"),
+		),
+	)
 	require.NoError(t, err)
 
 	// Cleanup
