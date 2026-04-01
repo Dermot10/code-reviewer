@@ -7,7 +7,9 @@ import (
 )
 
 func TestChatService_CreateAndListConversations(t *testing.T) {
-	db, _ := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+
 	logger := newTestLogger()
 	service := NewChatService(db, logger)
 
@@ -23,7 +25,9 @@ func TestChatService_CreateAndListConversations(t *testing.T) {
 }
 
 func TestChatService_CreateAndListMessages(t *testing.T) {
-	db, _ := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+
 	logger := newTestLogger()
 	service := NewChatService(db, logger)
 
@@ -40,7 +44,9 @@ func TestChatService_CreateAndListMessages(t *testing.T) {
 }
 
 func TestChatService_ArchiveRenameDeleteConversation(t *testing.T) {
-	db, _ := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+
 	logger := newTestLogger()
 	service := NewChatService(db, logger)
 

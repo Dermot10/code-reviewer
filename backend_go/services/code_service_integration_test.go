@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,7 +13,13 @@ import (
 )
 
 func TestReviewService_CreateReview_Listener(t *testing.T) {
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
+
+	// Create a new user
+	user := models.User{Username: "testuser", Email: "test@test.com", HashedPassword: "hash", IsActive: true}
+	require.NoError(t, db.Create(&user).Error)
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)
@@ -28,6 +35,7 @@ func TestReviewService_CreateReview_Listener(t *testing.T) {
 	defer cancel()
 
 	go service.ListenForCodeCompletions(ctx)
+	time.Sleep(100 * time.Millisecond)
 
 	// Simulate completion event in Redis
 	event := map[string]interface{}{
@@ -37,7 +45,7 @@ func TestReviewService_CreateReview_Listener(t *testing.T) {
 	eventJSON, _ := json.Marshal(event)
 
 	// Store a fake result in Redis (the listener will pick it up)
-	resultKey := "review:" + string(rune(review.ID)) + ":result"
+	resultKey := fmt.Sprintf("review:%d:result", review.ID)
 	require.NoError(t, rdb.Set(ctx, resultKey, "review result", 0).Err())
 
 	// Publish completion event

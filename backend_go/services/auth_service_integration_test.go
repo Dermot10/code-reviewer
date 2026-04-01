@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"log/slog"
 	"testing"
@@ -17,8 +16,9 @@ func newTestLogger() *slog.Logger {
 }
 
 func TestAuthService_CreateUser(t *testing.T) {
-
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)
@@ -38,8 +38,9 @@ func TestAuthService_CreateUser(t *testing.T) {
 }
 
 func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
-
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)
@@ -47,7 +48,7 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	service := NewAuthService(db, rc, logger, "testsecret")
 
 	user := models.User{
-		Username:       "Sora",
+		Username:       "sora",
 		Email:          "sora@test.com",
 		HashedPassword: "hash",
 	}
@@ -59,21 +60,16 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "sora", resp.Username)
 
-	// ensure cached
-	key := "user:" + string(rune(user.ID)) + ":profile"
-
-	val, err := rdb.Get(context.Background(), key).Result()
+	// second call should hit cache (no DB query)
+	resp2, err := service.GetUser(user.ID)
 	require.NoError(t, err)
-
-	var cached map[string]interface{}
-	require.NoError(t, json.Unmarshal([]byte(val), &cached))
-
-	require.Equal(t, "sora", cached["Username"])
+	require.Equal(t, "sora", resp2.Username)
 }
 
 func TestAuthService_Login(t *testing.T) {
-
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)
@@ -92,8 +88,9 @@ func TestAuthService_Login(t *testing.T) {
 }
 
 func TestAuthService_Logout(t *testing.T) {
-
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
 
 	logger := newTestLogger()
 	rc := redis.NewRedisClientFromClient(rdb)

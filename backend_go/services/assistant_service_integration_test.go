@@ -14,7 +14,15 @@ import (
 )
 
 func TestAssistantService_SendPrompt(t *testing.T) {
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
+
+	// Create user and conversation that the FK requires
+	user := models.User{Username: "testuser", Email: "test@test.com", HashedPassword: "hash", IsActive: true}
+	require.NoError(t, db.Create(&user).Error)
+	conv := models.Conversation{UserID: user.ID}
+	require.NoError(t, db.Create(&conv).Error)
 
 	logger := newTestLogger()
 	wsHub := websocket.NewHub()
@@ -37,11 +45,13 @@ func TestAssistantService_SendPrompt(t *testing.T) {
 	// Redis queue contains task
 	val, err := rdb.RPop(context.Background(), "queue:tasks").Result()
 	require.NoError(t, err)
-	require.Contains(t, val, `"Prompt":"Hello AI"`)
+	require.Contains(t, val, `"prompt":"Hello AI"`)
 }
 
 func TestAssistantService_ListenForAssistantEvents(t *testing.T) {
-	db, rdb := setUp(t)
+	setup := SetUpTest(t)
+	db := setup.DB
+	rdb := setup.RDB
 
 	logger := newTestLogger()
 	wsHub := websocket.NewHub()
@@ -50,7 +60,9 @@ func TestAssistantService_ListenForAssistantEvents(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
+
 	go service.ListenForAssistantEvents(ctx)
+	time.Sleep(100 * time.Millisecond)
 
 	// Simulate "assistant.completed" event
 	event := dto.AssistantTaskEvent{
