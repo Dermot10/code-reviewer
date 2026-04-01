@@ -2,8 +2,8 @@ name: go-api-ci
 
 on:
   push:
-    paths:
-      - "backend_go/**"
+    # paths:
+    #   - "backend_go/**"
 
 jobs:
   test:
