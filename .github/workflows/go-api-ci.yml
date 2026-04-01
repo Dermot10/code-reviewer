@@ -3,7 +3,7 @@ name: go-api-ci
 on:
   push:
     branches:
-      - feature/backend_go
+      - feature/go-api
     paths:
       - "backend_go/**"
 

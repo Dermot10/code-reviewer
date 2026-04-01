@@ -3,7 +3,7 @@ name: python-worker-ci
 on:
   push:
     branches:
-      - feature/ backend_python
+      - feature/python-ai
     paths:
       - "backend_python/**"
 
