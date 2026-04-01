@@ -37,6 +37,9 @@ async def handle_best_practices(
         raise
 
 async def handle_security(
+    # will be moved outside of agent workflow and into preprocessing
+    # can be used to prevent prompt injection and jailbreaking - sanitising input before hand
+
     code_contexts: List[CodeContext]
 ) -> List[ResponseContext]:
     try:

@@ -4,6 +4,7 @@
 __pycache__/
 *.py[cod]
 *.env
+backend-python/test-env/
 backend-python/venv/
 test_ws_client/.env
 
