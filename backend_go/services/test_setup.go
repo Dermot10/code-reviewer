@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/dermot10/code-reviewer/backend_go/models"
@@ -25,7 +26,7 @@ func setUp(t *testing.T) (*gorm.DB, *redis.Client) {
 		postgrescontainer.WithUsername("test"),
 		postgrescontainer.WithPassword("test"),
 		testcontainers.WithWaitStrategy(
-			wait.ForLog("database system is ready to accept connections"),
+			wait.ForListeningPort("5432/tcp"),
 		),
 	)
 	require.NoError(t, err)
@@ -45,8 +46,15 @@ func setUp(t *testing.T) (*gorm.DB, *redis.Client) {
 	})
 
 	// Connect GORM to Postgres container
-	pgConnStr, _ := pg.ConnectionString(ctx, "sslmode=disable")
-	db, err := gorm.Open(gormpostgres.Open(pgConnStr), &gorm.Config{})
+	pgPort, err := pg.MappedPort(ctx, "5432")
+	require.NoError(t, err)
+
+	connStr := fmt.Sprintf(
+		"host=localhost port=%d user=test dbname=testdb password=test sslmode=disable",
+		pgPort.Int(),
+	)
+
+	db, err := gorm.Open(gormpostgres.Open(connStr), &gorm.Config{})
 	require.NoError(t, err)
 
 	// Migrate DB table to testcontainer for test usage
