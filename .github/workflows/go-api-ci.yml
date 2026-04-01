@@ -25,12 +25,15 @@ jobs:
 
       - name: Install deps
         run: go mod download
+        working-directory: backend_go
 
       - name: Run tests
         run: go test ./...
+        working-directory: backend_go
 
       - name: Build
         run: go build ./...
+        working-directory: backend_go
 
       - name: Run linters
         run: |
