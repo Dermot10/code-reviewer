@@ -34,7 +34,7 @@ func (c *Client) ReadPump() {
 
 	// heartbeat mechanism, periodically checks
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.Conn.SetReadLimit(maxMessageSize) 
+	c.Conn.SetReadLimit(maxMessageSize)
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
@@ -55,7 +55,7 @@ func (c *Client) ReadPump() {
 			c.OnMessage(c.UserID, message)
 		}
 
-		// return event
+		// return event to handler
 	}
 }
 
