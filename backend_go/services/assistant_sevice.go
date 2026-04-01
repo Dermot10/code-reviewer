@@ -98,13 +98,6 @@ func (s *AssistantService) ListenForAssistantEvents(ctx context.Context) {
 	pubsub := s.redis.Rdb.Subscribe(ctx, "assistant.events")
 	defer pubsub.Close()
 
-	// Block until subscription is confirmed by Redis before processing
-	_, err := pubsub.Receive(ctx)
-	if err != nil {
-		s.logger.Error("failed to establish subscription", "error", err)
-		return
-	}
-
 	s.logger.Info("listening for AI assistant messages")
 
 	ch := pubsub.Channel()
