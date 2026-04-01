@@ -79,8 +79,8 @@ func setUp(t *testing.T) (*gorm.DB, *redis.Client) {
 
 	// Insert default test fixtures (users) to prevent FK violations
 	err = db.Create(&models.User{
-		ID:   1,
-		Name: "Test User",
+		ID:       1,
+		Username: "Test User",
 	}).Error
 	require.NoError(t, err)
 
