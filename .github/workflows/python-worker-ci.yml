@@ -2,8 +2,8 @@ name: python-worker-ci
 
 on:
   push:
-    paths:
-      - "backend_python/**"
+    # paths:
+    #   - "backend_python/**"
 
 jobs:
   test:
