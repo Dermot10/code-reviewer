@@ -60,7 +60,7 @@ func TestAuthService_GetUser_CacheMissThenHit(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "sora", resp.Username)
 
-	// second call should hit cache (no DB query)
+	// second call should hit cache (no DB query required)
 	resp2, err := service.GetUser(user.ID)
 	require.NoError(t, err)
 	require.Equal(t, "sora", resp2.Username)
