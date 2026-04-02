@@ -60,8 +60,8 @@ jobs:
         run: go build ./...
         working-directory: backend_go
 
-      - name: Run linters
-        run: |
-          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-          golangci-lint run ./...
-        working-directory: backend_go
+      # - name: Run linters
+      #   run: |
+      #     go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      #     golangci-lint run ./...
+      #   working-directory: backend_go

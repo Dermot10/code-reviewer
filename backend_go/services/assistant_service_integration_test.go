@@ -75,7 +75,7 @@ func TestAssistantService_ListenForAssistantEvents(t *testing.T) {
 
 	require.NoError(t, rdb.Publish(ctx, "assistant.events", eventJSON).Err())
 
-	time.Sleep(200 * time.Millisecond) // allow listener to process
+	time.Sleep(200 * time.Millisecond) // allow listener time to process
 
 	// Check DB saved assistant message
 	var msg models.ChatMessage
