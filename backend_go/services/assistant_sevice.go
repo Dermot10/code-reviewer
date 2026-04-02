@@ -24,7 +24,7 @@ func NewAssistantService(db *gorm.DB, redis *redis.RedisClient, logger *slog.Log
 }
 
 func (s *AssistantService) SendPrompt(userID uint, payload dto.PromptPayload) error {
-	// persist user msg, push to queue for worker
+	// persist user message, push to queue for worker
 	ctx := context.Background()
 
 	s.logger.Info("SendPrompt called",
